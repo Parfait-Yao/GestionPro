@@ -9,15 +9,22 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { Activity } from "lucide-react";
 
-const data = [
-  { jour: "1", mouvements: 40 }, { jour: "5", mouvements: 65 },
-  { jour: "10", mouvements: 52 }, { jour: "15", mouvements: 78 },
-  { jour: "20", mouvements: 61 }, { jour: "25", mouvements: 95 },
-  { jour: "30", mouvements: 88 },
-];
+export type PointMouvement = { jour: string; mouvements: number };
 
-export function GraphiqueMouvements() {
+export function GraphiqueMouvements({ data }: { data: PointMouvement[] }) {
+  const total = data.reduce((a, d) => a + d.mouvements, 0);
+
+  if (total === 0) {
+    return (
+      <div className="flex h-[260px] flex-col items-center justify-center gap-2 text-text-muted">
+        <Activity className="h-8 w-8 opacity-30" />
+        <p className="text-sm">Aucun mouvement de stock sur les 30 derniers jours</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={260}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -29,7 +36,7 @@ export function GraphiqueMouvements() {
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
         <XAxis dataKey="jour" tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false} allowDecimals={false} />
         <Tooltip
           contentStyle={{ borderRadius: 8, borderColor: "#E2E8F0", fontSize: 12 }}
           labelFormatter={(l) => `Jour ${l}`}

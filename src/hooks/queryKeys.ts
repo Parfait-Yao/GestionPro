@@ -9,4 +9,7 @@ export const queryKeys = {
   pointage: ["pointage"] as const,
   pointageOpen: ["pointage", "open"] as const,
   pointageJournal: (date: string) => ["pointage", "journal", date] as const,
+  dashboard: ["dashboard"] as const,
+  stock: ["stock"] as const,
+  alertes: ["alertes"] as const,
 };
