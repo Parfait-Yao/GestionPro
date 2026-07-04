@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -10,7 +10,6 @@ import {
   Send,
   CheckCircle,
   AlertCircle,
-  Loader,
   CalendarRange,
   ArrowRight,
   PackageSearch,
@@ -63,6 +62,14 @@ export default function RapportsPage() {
   const [dateFin, setDateFin] = useState(today);
   const [statutWA, setStatutWA] = useState<Statut>("idle");
   const [messageWA, setMessageWA] = useState("");
+  const [numeroPatronne, setNumeroPatronne] = useState("");
+
+  useEffect(() => {
+    fetch("/api/parametres/config")
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => setNumeroPatronne(data.whatsapp_numero_patronne ?? ""))
+      .catch(() => {});
+  }, []);
 
   function buildParams() {
     const debut = startOfDay(new Date(dateDebut)).toISOString();
@@ -76,30 +83,28 @@ export default function RapportsPage() {
     window.open(url, "_blank");
   }
 
-  async function envoyerWhatsApp() {
-    setStatutWA("loading");
+  function envoyerWhatsApp() {
     setMessageWA("");
-    const { debut, fin } = buildParams();
 
-    try {
-      const res = await fetch("/api/rapports/whatsapp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dateDebut: debut, dateFin: fin }),
-      });
-      const json = await res.json() as { ok?: boolean; error?: string; destinataire?: string };
-
-      if (!res.ok) {
-        setStatutWA("erreur");
-        setMessageWA(json.error ?? "Erreur inconnue");
-      } else {
-        setStatutWA("ok");
-        setMessageWA(`Rapport envoyé sur ${json.destinataire}`);
-      }
-    } catch {
+    const chiffres = numeroPatronne.replace(/[^\d]/g, "");
+    if (!chiffres) {
       setStatutWA("erreur");
-      setMessageWA("Impossible de contacter le serveur.");
+      setMessageWA("Numéro WhatsApp de la patronne non configuré. Renseignez-le dans Paramètres.");
+      return;
     }
+
+    // Le PDF se télécharge sur l'appareil du gérant : il n'y a qu'à le joindre au message WhatsApp.
+    telechargerPdf();
+
+    const texte =
+      `Bonjour, voici le rapport d'activité du ${format(new Date(dateDebut), "d MMMM yyyy", { locale: fr })} ` +
+      `au ${format(new Date(dateFin), "d MMMM yyyy", { locale: fr })}. ` +
+      `Le PDF vient d'être téléchargé, merci de le joindre à ce message avant l'envoi.`;
+
+    window.open(`https://wa.me/${chiffres}?text=${encodeURIComponent(texte)}`, "_blank");
+
+    setStatutWA("ok");
+    setMessageWA(`WhatsApp ouvert vers ${numeroPatronne} — joignez le PDF téléchargé puis envoyez.`);
   }
 
   const periodes = [
@@ -263,26 +268,12 @@ export default function RapportsPage() {
               <div className="text-center">
                 <p className="font-semibold text-text-main">Envoyer sur WhatsApp</p>
                 <p className="mt-1 text-sm text-text-muted">
-                  Envoie le rapport en PDF directement à la patronne
+                  Ouvre WhatsApp vers la patronne, PDF prêt à joindre
                 </p>
               </div>
-              <Button
-                className="w-full"
-                variant="success"
-                onClick={envoyerWhatsApp}
-                disabled={statutWA === "loading"}
-              >
-                {statutWA === "loading" ? (
-                  <>
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Envoi en cours…
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Envoyer sur WhatsApp
-                  </>
-                )}
+              <Button className="w-full" variant="success" onClick={envoyerWhatsApp}>
+                <Send className="h-4 w-4" />
+                Envoyer sur WhatsApp
               </Button>
 
               {/* Retour d'état */}
@@ -302,21 +293,20 @@ export default function RapportsPage() {
           </Card>
         </div>
 
-        {/* Info configuration WhatsApp */}
+        {/* Info fonctionnement de l'envoi WhatsApp */}
         <Card className="border-warning/20 bg-warning/5">
           <CardContent className="flex items-start gap-3 pt-4 pb-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg kpi-warning">
               <ShieldAlert className="h-[18px] w-[18px]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-warning">Configuration requise pour l&apos;envoi WhatsApp</p>
+              <p className="text-sm font-semibold text-warning">Comment fonctionne l&apos;envoi WhatsApp</p>
               <p className="mt-1 text-sm text-text-muted">
-                Pour envoyer des rapports via WhatsApp, renseignez{" "}
-                <code className="rounded bg-warning/15 px-1 font-mono text-xs text-warning">WHATSAPP_TOKEN</code> et{" "}
-                <code className="rounded bg-warning/15 px-1 font-mono text-xs text-warning">WHATSAPP_PHONE_NUMBER_ID</code>{" "}
-                dans le fichier <code className="rounded bg-warning/15 px-1 font-mono text-xs text-warning">.env.local</code>,
-                puis configurez le numéro de la patronne dans{" "}
-                <a href="/parametres" className="font-semibold underline">Paramètres</a>.
+                Le bouton télécharge le PDF puis ouvre une conversation WhatsApp pré-remplie vers le
+                numéro de la patronne configuré dans{" "}
+                <a href="/parametres" className="font-semibold underline">Paramètres</a>. Il ne reste
+                qu&apos;à joindre le PDF téléchargé au message avant de l&apos;envoyer — aucune
+                configuration technique supplémentaire n&apos;est nécessaire.
               </p>
             </div>
           </CardContent>
