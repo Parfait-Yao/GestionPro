@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PATRONNE
+  GERANT
+}
+
+enum EmployeRole {
+  COIFFEUSE
+  COIFFEUR
+  LIVREUR
+  LIVREUSE
+  VENDEUR
+  VENDEUSE
+  CAISSIER
+  CAISSIERE
+  SECURITE
+  AUTRE
+}
+
+enum CommandeStatut {
+  EN_ATTENTE
+  CONFIRMEE
+  EN_LIVRAISON
+  LIVREE
+  ANNULEE
+}
+
+enum ProductStatus {
+  RECU
+  EN_STOCK_BRUT
+  EN_TRANSFORMATION
+  EN_STOCK_TRANSFORME
+  VENDU
+  UTILISE_INTERNE
+}
+
+enum MouvementType {
+  RECEPTION
+  TRANSFORMATION_DEBUT
+  TRANSFORMATION_FIN
+  VENTE
+  USAGE_INTERNE
+  REMPLACEMENT_DEFECTUEUX
+  CORRECTION_INVENTAIRE
+}
+enum SortieMotif {
+  VENTE
+  TRANSFORMATION
+  USAGE_INTERNE
+  REMPLACEMENT_DEFECTUEUX
+  AUTRE
+}
+
+enum SortieStatut {
+  EN_ATTENTE
+  CONFIRMEE
+  REFUSEE
+  ESCALADE_PATRONNE
+}
+
+enum MethodeComptage {
+  PESEE_ASSISTEE
+  COMPTAGE_GROUPE
+}
+
+enum AlerteStatut {
+  OUVERTE
+  EN_COURS
+  RESOLUE
+  CLASSEE
+}
+
+model Utilisateur {
+  id        String   @id @default(cuid())
+  nom       String
+  prenom    String
+  role      Role
+  pinHash   String
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  receptions Reception[]
+  sorties    Sortie[]
+  pointages  Pointage[]       @relation("GerantPointage")
+  mouvements MouvementStock[]
+  comptages  Comptage[]
+  commandes  Commande[]
+
+  @@map("utilisateurs")
+}
+
+model Employe {
+  id        String      @id @default(cuid())
+  nom       String
+  prenom    String
+  role      EmployeRole @default(AUTRE)
+  telephone String?
+  actif     Boolean     @default(true)
+  createdAt DateTime    @default(now())
+
+  pointages  Pointage[]
+  sorties    Sortie[]
+  commandes  Commande[] @relation("CommandeLivreur")
+
+  @@map("employes")
+}
+
+model Produit {
+  id                String   @id @default(cuid())
+  nom               String
+  categorie         String?
+  description       String?
+  imageUrl          String?
+  poidsUnitaireRef  Float?
+  tarreCarton       Float?
+  seuilTolerancePct Float    @default(3.0)
+  seuilSensibleQte  Int      @default(50)
+  actif             Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  receptions Reception[]
+  mouvements MouvementStock[]
+  sorties    Sortie[]
+  comptages  Comptage[]
+  alertes    Alerte[]
+  commandes  Commande[]
+
+  @@map("produits")
+}
+
+model Reception {
+  id                  String          @id @default(cuid())
+  produit             Produit         @relation(fields: [produitId], references: [id])
+  produitId           String
+  gerant              Utilisateur     @relation(fields: [gerantId], references: [id])
+  gerantId            String
+  methode             MethodeComptage
+  quantiteAttendue    Int
+  quantiteEstimee     Int
+  intervalleMin       Int?
+  intervalleMax       Int?
+  ecartPct            Float
+  poidsEchantillon    Float?
+  nbUnitesEchantillon Int?
+  poidsCartonPlein    Float?
+  tarreUtilisee       Float?
+  nbTas               Int?
+  unitesParTas        Int?
+  noteGerant          String?
+  valide              Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+
+  @@map("receptions")
+}
+
+model MouvementStock {
+  id          String         @id @default(cuid())
+  produit     Produit        @relation(fields: [produitId], references: [id])
+  produitId   String
+  gerant      Utilisateur    @relation(fields: [gerantId], references: [id])
+  gerantId    String
+  type        MouvementType
+  etatDepart  ProductStatus?
+  etatArrivee ProductStatus
+  quantite    Int
+  note        String?
+  createdAt   DateTime       @default(now())
+
+  @@map("mouvements_stock")
+}
+
+model Sortie {
+  id                String       @id @default(cuid())
+  produit           Produit      @relation(fields: [produitId], references: [id])
+  produitId         String
+  employe           Employe      @relation(fields: [employeId], references: [id])
+  employeId         String
+  gerant            Utilisateur  @relation(fields: [gerantId], references: [id])
+  gerantId          String
+  motif             SortieMotif
+  noteMotif         String?
+  quantiteAnnoncee  Int
+  quantiteConfirmee Int?
+  statut            SortieStatut @default(EN_ATTENTE)
+  ecartConstate     Int?
+  annonceAt         DateTime     @default(now())
+  confirmationAt    DateTime?
+  escaladeAt        DateTime?
+
+  @@map("sorties")
+}
+
+model Pointage {
+  id        String      @id @default(cuid())
+  employe   Employe     @relation(fields: [employeId], references: [id])
+  employeId String
+  gerant    Utilisateur @relation("GerantPointage", fields: [gerantId], references: [id])
+  gerantId  String
+  entreeAt  DateTime    @default(now())
+  sortieAt  DateTime?
+
+  @@map("pointages")
+}
+
+model Comptage {
+  id             String      @id @default(cuid())
+  produit        Produit     @relation(fields: [produitId], references: [id])
+  produitId      String
+  gerant         Utilisateur @relation(fields: [gerantId], references: [id])
+  gerantId       String
+  stockTheorique Int
+  stockReel      Int
+  ecart          Int
+  note           String?
+  createdAt      DateTime    @default(now())
+
+  alertes Alerte[]
+
+  @@map("comptages")
+}
+
+model Alerte {
+  id                String       @id @default(cuid())
+  produit           Produit?     @relation(fields: [produitId], references: [id])
+  produitId         String?
+  comptage          Comptage?    @relation(fields: [comptageId], references: [id])
+  comptageId        String?
+  ecartQuantite     Int
+  periodeDebut      DateTime
+  periodeFin        DateTime
+  gerantEnPoste     String
+  employesConcernes Json
+  statut            AlerteStatut @default(OUVERTE)
+  createdAt         DateTime     @default(now())
+  resolueAt         DateTime?
+
+  @@map("alertes")
+}
+
+model Notification {
+  id           String   @id @default(cuid())
+  canal        String
+  destinataire String
+  contenu      String
+  succes       Boolean
+  erreur       String?
+  createdAt    DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model NotificationApp {
+  id        String   @id @default(cuid())
+  type      String
+  titre     String
+  message   String
+  lien      String?
+  lue       Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications_app")
+}
+
+model Configuration {
+  cle       String   @id
+  valeur    String
+  updatedAt DateTime @updatedAt
+
+  @@map("configurations")
+}
+
+model Commande {
+  id               String         @id @default(cuid())
+  reference        String         @unique
+  client           String
+  telephoneClient  String?
+  adresseLivraison String?
+  produit          Produit        @relation(fields: [produitId], references: [id])
+  produitId        String
+  quantite         Int
+  prixUnitaire     Float?
+  statut           CommandeStatut @default(EN_ATTENTE)
+  livreur          Employe?       @relation("CommandeLivreur", fields: [livreurId], references: [id])
+  livreurId        String?
+  gerant           Utilisateur    @relation(fields: [gerantId], references: [id])
+  gerantId         String
+  note             String?
+  commandeAt       DateTime       @default(now())
+  livraisonAt      DateTime?
+
+  @@map("commandes")
+}

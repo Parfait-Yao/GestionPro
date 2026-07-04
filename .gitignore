@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma generated client (regenerated via pnpm db:generate)
+/src/generated/
+
+# debug scripts and manual test captures (not part of the app)
+/__test2.js
+/test-badges.tmp.js
+/test-notifications.js
+/verify_pointage_tmp.js
+/1-login.png
+/1-login-filled.png
+/1b-after-fill.png
+/2-pointage-initial.png
+/ERROR.png
+/screenshots/
