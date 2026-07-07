@@ -66,9 +66,9 @@ enum SortieStatut {
   ESCALADE_PATRONNE
 }
 
-enum MethodeComptage {
-  PESEE_ASSISTEE
-  COMPTAGE_GROUPE
+enum MouvementSens {
+  ENTREE
+  SORTIE
 }
 
 enum AlerteStatut {
@@ -88,12 +88,12 @@ model Utilisateur {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  receptions Reception[]
-  sorties    Sortie[]
-  pointages  Pointage[]       @relation("GerantPointage")
-  mouvements MouvementStock[]
-  comptages  Comptage[]
-  commandes  Commande[]
+  receptions       Reception[]
+  mouvementsSaisis Mouvement[]
+  pointages        Pointage[]       @relation("GerantPointage")
+  mouvements       MouvementStock[]
+  comptages        Comptage[]
+  commandes        Commande[]
 
   @@map("utilisateurs")
 }
@@ -108,57 +108,49 @@ model Employe {
   createdAt DateTime    @default(now())
 
   pointages  Pointage[]
-  sorties    Sortie[]
+  mouvements Mouvement[]
   commandes  Commande[] @relation("CommandeLivreur")
 
   @@map("employes")
 }
 
 model Produit {
-  id                String   @id @default(cuid())
-  nom               String
-  categorie         String?
-  description       String?
-  imageUrl          String?
-  poidsUnitaireRef  Float?
-  tarreCarton       Float?
-  seuilTolerancePct Float    @default(3.0)
-  seuilSensibleQte  Int      @default(50)
-  actif             Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id          String   @id @default(cuid())
+  nom         String
+  categorie   String?
+  description String?
+  imageUrl    String?
+  quantite    Int      @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  receptions Reception[]
-  mouvements MouvementStock[]
-  sorties    Sortie[]
-  comptages  Comptage[]
-  alertes    Alerte[]
-  commandes  Commande[]
+  receptions      Reception[]
+  mouvements      MouvementStock[]
+  mouvementLignes MouvementLigne[]
+  comptages       Comptage[]
+  alertes         Alerte[]
+  commandes       Commande[]
 
   @@map("produits")
 }
 
 model Reception {
-  id                  String          @id @default(cuid())
-  produit             Produit         @relation(fields: [produitId], references: [id])
-  produitId           String
-  gerant              Utilisateur     @relation(fields: [gerantId], references: [id])
-  gerantId            String
-  methode             MethodeComptage
-  quantiteAttendue    Int
-  quantiteEstimee     Int
-  intervalleMin       Int?
-  intervalleMax       Int?
-  ecartPct            Float
-  poidsEchantillon    Float?
-  nbUnitesEchantillon Int?
-  poidsCartonPlein    Float?
-  tarreUtilisee       Float?
-  nbTas               Int?
-  unitesParTas        Int?
-  noteGerant          String?
-  valide              Boolean         @default(false)
-  createdAt           DateTime        @default(now())
+  id               String         @id @default(cuid())
+  produit          Produit        @relation(fields: [produitId], references: [id])
+  produitId        String
+  gerant           Utilisateur    @relation(fields: [gerantId], references: [id])
+  gerantId         String
+  commandeChine    CommandeChine? @relation(fields: [commandeChineId], references: [id])
+  commandeChineId  String?
+  cartonChine      CartonChine?   @relation(fields: [cartonChineId], references: [id])
+  cartonChineId    String?
+  quantiteAttendue Int
+  quantiteRecue    Int
+  ecart            Int
+  noteGerant       String?
+  valide           Boolean        @default(true)
+  createdAt        DateTime       @default(now())
 
   @@map("receptions")
 }
@@ -179,25 +171,32 @@ model MouvementStock {
   @@map("mouvements_stock")
 }
 
-model Sortie {
-  id                String       @id @default(cuid())
-  produit           Produit      @relation(fields: [produitId], references: [id])
-  produitId         String
-  employe           Employe      @relation(fields: [employeId], references: [id])
-  employeId         String
-  gerant            Utilisateur  @relation(fields: [gerantId], references: [id])
-  gerantId          String
-  motif             SortieMotif
-  noteMotif         String?
-  quantiteAnnoncee  Int
-  quantiteConfirmee Int?
-  statut            SortieStatut @default(EN_ATTENTE)
-  ecartConstate     Int?
-  annonceAt         DateTime     @default(now())
-  confirmationAt    DateTime?
-  escaladeAt        DateTime?
+model Mouvement {
+  id        String        @id @default(cuid())
+  type      MouvementSens
+  employe   Employe       @relation(fields: [employeId], references: [id])
+  employeId String
+  gerant    Utilisateur   @relation(fields: [gerantId], references: [id])
+  gerantId  String
+  motif     SortieMotif
+  noteMotif String?
+  statut    SortieStatut  @default(CONFIRMEE)
+  createdAt DateTime      @default(now())
 
-  @@map("sorties")
+  lignes MouvementLigne[]
+
+  @@map("mouvements")
+}
+
+model MouvementLigne {
+  id          String    @id @default(cuid())
+  mouvement   Mouvement @relation(fields: [mouvementId], references: [id], onDelete: Cascade)
+  mouvementId String
+  produit     Produit   @relation(fields: [produitId], references: [id])
+  produitId   String
+  quantite    Int
+
+  @@map("mouvement_lignes")
 }
 
 model Pointage {
@@ -299,4 +298,32 @@ model Commande {
   livraisonAt      DateTime?
 
   @@map("commandes")
+}
+
+model CommandeChine {
+  id        String        @id @default(cuid())
+  reference String        @unique
+  note      String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  cartons   CartonChine[]
+  receptions Reception[]
+
+  @@map("commandes_chine")
+}
+
+model CartonChine {
+  id              String        @id @default(cuid())
+  commandeChine   CommandeChine @relation(fields: [commandeChineId], references: [id], onDelete: Cascade)
+  commandeChineId String
+  identifiant     String
+  photoUrl        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  receptions Reception[]
+
+  @@unique([commandeChineId, identifiant])
+  @@map("cartons_chine")
 }

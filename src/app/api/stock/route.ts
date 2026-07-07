@@ -7,10 +7,26 @@ function sumQuantite(rows: { type: string; _sum: { quantite: number | null } }[]
 
 export async function GET() {
   try {
-    const [produits, mouvements] = await Promise.all([
+    const [produits, mouvements, receptions, mouvementsSortie] = await Promise.all([
       prisma.produit.findMany({ where: { actif: true }, orderBy: { nom: "asc" } }),
       prisma.mouvementStock.groupBy({ by: ["produitId", "type"], _sum: { quantite: true } }),
+      prisma.reception.findMany({
+        orderBy: { createdAt: "asc" },
+        include: {
+          produit: { select: { id: true, nom: true, imageUrl: true } },
+          cartonChine: { select: { id: true, identifiant: true } },
+        },
+      }),
+      prisma.mouvement.findMany({
+        where: { type: "SORTIE", statut: { in: ["CONFIRMEE", "ESCALADE_PATRONNE"] } },
+        orderBy: { createdAt: "asc" },
+        select: { motif: true, lignes: { select: { produitId: true, quantite: true } } },
+      }),
     ]);
+
+    const sorties = mouvementsSortie.flatMap((m) =>
+      m.lignes.map((l) => ({ produitId: l.produitId, motif: m.motif, quantiteConfirmee: l.quantite as number | null }))
+    );
 
     const parProduit = new Map<string, { type: string; _sum: { quantite: number | null } }[]>();
     for (const m of mouvements) {
@@ -21,7 +37,7 @@ export async function GET() {
 
     const totaux = { brut: 0, transformation: 0, transforme: 0, vendu: 0, usage: 0 };
 
-    const stock = produits.map((p) => {
+    for (const p of produits) {
       const rows = parProduit.get(p.id) ?? [];
       const totalRecu = sumQuantite(rows, "RECEPTION");
       const totalVente = sumQuantite(rows, "VENTE");
@@ -31,7 +47,8 @@ export async function GET() {
       const totalRemplacement = sumQuantite(rows, "REMPLACEMENT_DEFECTUEUX");
       const totalCorrection = sumQuantite(rows, "CORRECTION_INVENTAIRE");
 
-      const brut = Math.max(0, totalRecu - totalVente - totalTransfoDebut - totalUsage - totalRemplacement - totalCorrection);
+      const consomme = totalVente + totalTransfoDebut + totalUsage + totalRemplacement + totalCorrection;
+      const brut = Math.max(0, totalRecu - consomme);
       const transformation = Math.max(0, totalTransfoDebut - totalTransfoFin);
       const transforme = totalTransfoFin;
       const vendu = totalVente + totalRemplacement + totalCorrection;
@@ -41,19 +58,52 @@ export async function GET() {
       totaux.transforme += transforme;
       totaux.vendu += vendu;
       totaux.usage += totalUsage;
+    }
+
+    // File de sorties confirmées par produit, dans l'ordre chronologique, pour imputation FIFO.
+    const sortiesParProduit = new Map<string, { motif: string; remaining: number }[]>();
+    for (const s of sorties) {
+      if (s.quantiteConfirmee == null) continue;
+      const list = sortiesParProduit.get(s.produitId) ?? [];
+      list.push({ motif: s.motif, remaining: s.quantiteConfirmee });
+      sortiesParProduit.set(s.produitId, list);
+    }
+    const curseurParProduit = new Map<string, number>();
+
+    // Consommation répartie en FIFO : les cartons reçus en premier sont épuisés en premier,
+    // par les sorties confirmées les plus anciennes en premier (aucun lien direct carton <-> sortie en base).
+    const stock = receptions.map((r) => {
+      let capacite = r.quantiteRecue;
+      const motifsMap = new Map<string, number>();
+      const file = sortiesParProduit.get(r.produitId) ?? [];
+      let idx = curseurParProduit.get(r.produitId) ?? 0;
+
+      while (capacite > 0 && idx < file.length) {
+        const item = file[idx];
+        if (item.remaining <= 0) {
+          idx++;
+          continue;
+        }
+        const pris = Math.min(capacite, item.remaining);
+        motifsMap.set(item.motif, (motifsMap.get(item.motif) ?? 0) + pris);
+        capacite -= pris;
+        item.remaining -= pris;
+        if (item.remaining === 0) idx++;
+      }
+      curseurParProduit.set(r.produitId, idx);
 
       return {
-        id: p.id,
-        nom: p.nom,
-        categorie: p.categorie ?? "Non classé",
-        RECU: totalRecu,
-        EN_STOCK_BRUT: brut,
-        EN_TRANSFORMATION: transformation,
-        EN_STOCK_TRANSFORME: transforme,
-        VENDU: vendu,
-        ECART_NON_EXPLIQUE: 0,
+        id: r.id,
+        cartonLabel: r.cartonChine?.identifiant ?? (r.cartonChine ? r.cartonChine.id : "Sans carton"),
+        produitId: r.produit.id,
+        produitNom: r.produit.nom,
+        produitPhoto: r.produit.imageUrl,
+        quantiteRecue: r.quantiteRecue,
+        quantiteRestante: capacite,
+        motifs: Array.from(motifsMap, ([motif, quantite]) => ({ motif, quantite })),
+        createdAt: r.createdAt,
       };
-    });
+    }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     const totalGlobal = totaux.brut + totaux.transformation + totaux.transforme + totaux.vendu + totaux.usage;
     const repartition = totalGlobal === 0 ? [] : [

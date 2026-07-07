@@ -4,12 +4,13 @@ import { queryKeys } from "./queryKeys";
 
 export type Reception = {
   id: string;
-  produit: { nom: string; seuilTolerancePct: number };
+  produit: { nom: string };
   gerant: { nom: string; prenom: string };
-  methode: string;
+  commandeChine: { id: string; reference: string } | null;
+  cartonChine: { id: string; identifiant: string } | null;
   quantiteAttendue: number;
-  quantiteEstimee: number;
-  ecartPct: number;
+  quantiteRecue: number;
+  ecart: number;
   createdAt: string;
 };
 

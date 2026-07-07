@@ -27,24 +27,9 @@ export function formatPct(n: number) {
   return `${sign}${n.toFixed(1)}%`;
 }
 
-export function calculerPesee(input: {
-  poidsEchantillon: number;
-  nbUnitesEchantillon: number;
-  poidsCartonPlein: number;
-  tarreUtilisee: number;
-  quantiteAttendue?: number | null;
-}) {
-  const { poidsEchantillon: pe, nbUnitesEchantillon: ne, poidsCartonPlein: pc, tarreUtilisee: tare, quantiteAttendue: attendu } = input;
-  if (!pe || !ne || !pc) return null;
-
-  const poidsUnitaire = pe / ne;
-  const poidsNet = pc - (tare || 0);
-  const quantiteEstimee = Math.round(poidsNet / poidsUnitaire);
-  const marge = Math.max(1, Math.round(quantiteEstimee * 0.02));
-  const intervalleMin = quantiteEstimee - marge;
-  const intervalleMax = quantiteEstimee + marge;
-
-  const ecartPct = attendu ? ((quantiteEstimee - attendu) / attendu) * 100 : null;
-
-  return { poidsUnitaire, poidsNet, quantiteEstimee, intervalleMin, intervalleMax, ecartPct };
+export function libelleEcart(ecart: number) {
+  if (ecart === 0) return "Conforme";
+  const n = Math.abs(ecart);
+  const unite = n > 1 ? "unités" : "unité";
+  return ecart < 0 ? `Il manque ${n} ${unite}` : `${n} ${unite} en trop`;
 }

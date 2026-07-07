@@ -27,7 +27,7 @@ export default function LoginPage() {
         toast.error(data.error ?? "Identifiants incorrects");
       } else {
         toast.success("Connexion réussie. Bienvenue !");
-        router.push("/dashboard");
+        router.push("/accueil");
       }
     } catch {
       toast.error("Erreur réseau");

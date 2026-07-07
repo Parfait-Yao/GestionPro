@@ -8,10 +8,7 @@ export type Produit = {
   categorie: string | null;
   description: string | null;
   imageUrl: string | null;
-  poidsUnitaireRef: number | null;
-  tarreCarton: number | null;
-  seuilTolerancePct: number;
-  seuilSensibleQte: number;
+  quantite: number;
   actif: boolean;
 };
 
@@ -20,10 +17,7 @@ export type ProduitPayload = {
   categorie?: string;
   description?: string;
   imageUrl?: string | null;
-  poidsUnitaireRef?: string | number;
-  tarreCarton?: string | number;
-  seuilTolerancePct?: string | number;
-  seuilSensibleQte?: string | number;
+  quantite?: string | number;
 };
 
 export function useProduits() {

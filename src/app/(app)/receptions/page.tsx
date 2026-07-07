@@ -6,22 +6,18 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Scale, PackagePlus, CheckCircle2, AlertTriangle } from "lucide-react";
-import { formatDate, formatPct } from "@/lib/utils";
-
-const METHODE_LABELS: Record<string, string> = {
-  PESEE_ASSISTEE: "Pesée assistée",
-  COMPTAGE_GROUPE: "Comptage groupé",
-};
+import { Plus, PackagePlus, CheckCircle2, AlertTriangle, Boxes } from "lucide-react";
+import { formatDate, libelleEcart } from "@/lib/utils";
 
 type Reception = {
   id: string;
-  produit: { nom: string; seuilTolerancePct: number };
+  produit: { nom: string };
   gerant: { nom: string; prenom: string };
-  methode: string;
+  commandeChine: { id: string; reference: string } | null;
+  cartonChine: { id: string; identifiant: string } | null;
   quantiteAttendue: number;
-  quantiteEstimee: number;
-  ecartPct: number;
+  quantiteRecue: number;
+  ecart: number;
   createdAt: string;
 };
 
@@ -36,7 +32,7 @@ export default function ReceptionsPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const estConforme = (r: Reception) => Math.abs(r.ecartPct) <= r.produit.seuilTolerancePct;
+  const estConforme = (r: Reception) => r.ecart === 0;
   const conformes = receptions.filter(estConforme).length;
   const ecarts = receptions.length - conformes;
 
@@ -98,7 +94,7 @@ export default function ReceptionsPage() {
                   <CardContent className="p-0">
                     <div className="flex items-start gap-4 p-5">
                       <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${ok ? "from-emerald-500 to-emerald-400" : "from-red-500 to-red-400"} text-white shadow-md`}>
-                        <Scale className="h-5 w-5" />
+                        <Boxes className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-text-main truncate">{r.produit.nom}</p>
@@ -115,19 +111,22 @@ export default function ReceptionsPage() {
                         <p className="text-sm font-semibold text-text-main">{r.quantiteAttendue}</p>
                       </div>
                       <div>
-                        <p className="text-[11px] text-text-muted">Constaté</p>
-                        <p className="text-sm font-semibold text-text-main">{r.quantiteEstimee}</p>
+                        <p className="text-[11px] text-text-muted">Reçu</p>
+                        <p className="text-sm font-semibold text-text-main">{r.quantiteRecue}</p>
                       </div>
                       <div>
                         <p className="text-[11px] text-text-muted">Écart</p>
                         <p className={`text-sm font-semibold ${ok ? "text-emerald-600" : "text-red-600"}`}>
-                          {formatPct(r.ecartPct)}
+                          {r.ecart > 0 ? `+${r.ecart}` : r.ecart}
                         </p>
                       </div>
                     </div>
 
                     <div className="border-t border-border px-5 py-2.5 text-xs text-text-muted">
-                      {METHODE_LABELS[r.methode]}
+                      {r.commandeChine ? `${r.commandeChine.reference}` : "Sans commande"}
+                      {r.cartonChine ? ` · Carton ${r.cartonChine.identifiant}` : ""}
+                      {" · "}
+                      {libelleEcart(r.ecart)}
                     </div>
                   </CardContent>
                 </Card>

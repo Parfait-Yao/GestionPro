@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Plus, Package, Scale, Tag, Search, ImageIcon, Pencil, Trash2 } from "lucide-react";
+import { Plus, Package, Boxes, Search, ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { useProduits, useDeleteProduit } from "@/hooks/useProduits";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -34,7 +34,7 @@ export default function ProduitsPage() {
 
   return (
     <>
-      <Header title="Catalogue produits" subtitle="Références, photos et seuils de tolérance" />
+      <Header title="Catalogue produits" subtitle="Références, photos et quantités en stock" />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -108,17 +108,10 @@ export default function ProduitsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-2 text-sm">
-                        <Scale className="h-3.5 w-3.5 text-text-muted" />
-                        <span className="text-text-muted text-xs">Tolérance</span>
-                        <span className="ml-auto font-semibold text-text-main">{p.seuilTolerancePct}%</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-2 text-sm">
-                        <Tag className="h-3.5 w-3.5 text-text-muted" />
-                        <span className="text-text-muted text-xs">Seuil</span>
-                        <span className="ml-auto font-semibold text-text-main">{p.seuilSensibleQte}</span>
-                      </div>
+                    <div className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-2 text-sm">
+                      <Boxes className="h-3.5 w-3.5 text-text-muted" />
+                      <span className="text-text-muted text-xs">Quantité en stock</span>
+                      <span className="ml-auto font-semibold text-text-main">{p.quantite}</span>
                     </div>
                   </CardContent>
 

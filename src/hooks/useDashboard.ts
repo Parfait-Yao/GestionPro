@@ -10,7 +10,7 @@ export type ActiviteDashboard = {
   temps: string;
 };
 
-export type SortieEnAttenteDashboard = {
+export type MouvementEscaladeDashboard = {
   id: string;
   produit: string;
   employe: string;
@@ -24,7 +24,7 @@ export type DashboardData = {
     commandesEnAttente: number;
     commandesVariation: number;
     sortiesDuJour: number;
-    sortiesEnAttenteCount: number;
+    mouvementsEscaladeCount: number;
     sortiesVariation: number;
     alertesOuvertes: number;
     receptionsCeMois: number;
@@ -33,7 +33,7 @@ export type DashboardData = {
   };
   mouvementsGraph: { jour: string; mouvements: number }[];
   activites: ActiviteDashboard[];
-  sortiesEnAttente: SortieEnAttenteDashboard[];
+  mouvementsEscalade: MouvementEscaladeDashboard[];
 };
 
 export function useDashboard() {

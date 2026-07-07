@@ -13,6 +13,7 @@ export default function ParametresPage() {
   const [numero, setNumero] = useState("");
   const [heureAuto, setHeureAuto] = useState("18:00");
   const [autoActif, setAutoActif] = useState(false);
+  const [seuilEscalade, setSeuilEscalade] = useState("50");
   const [statut, setStatut] = useState<StatutSave>("idle");
   const [message, setMessage] = useState("");
 
@@ -23,6 +24,7 @@ export default function ParametresPage() {
         setNumero(data.whatsapp_numero_patronne ?? "");
         setHeureAuto(data.rapport_heure_auto ?? "18:00");
         setAutoActif(data.rapport_auto_actif === "true");
+        setSeuilEscalade(data.seuil_escalade_sortie ?? "50");
       })
       .catch(() => {});
   }, []);
@@ -38,6 +40,7 @@ export default function ParametresPage() {
           whatsapp_numero_patronne: numero,
           rapport_heure_auto: heureAuto,
           rapport_auto_actif: String(autoActif),
+          seuil_escalade_sortie: seuilEscalade,
         }),
       });
       if (res.ok) {
@@ -155,12 +158,17 @@ export default function ParametresPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <SlidersHorizontal className="h-4 w-4 text-warning" />
-              Seuils globaux par défaut
+              Seuil d&apos;escalade sortie de stock
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="Tolérance pesée par défaut (%)" type="number" defaultValue={3} />
-            <Input label="Seuil d'escalade (unités)" type="number" defaultValue={50} />
+          <CardContent className="space-y-2">
+            <Input label="Seuil d'escalade (unités)" type="number" min={0} value={seuilEscalade} onChange={(e) => setSeuilEscalade(e.target.value)} />
+            <p className="text-xs text-text-muted">Si la quantité confirmée d&apos;une sortie dépasse ce seuil, la patronne est automatiquement notifiée.</p>
+            <Button variant="primary" className="w-full" onClick={enregistrer} disabled={statut === "loading"}>
+              {statut === "loading" ? (
+                <><Loader className="h-4 w-4 animate-spin" />Enregistrement…</>
+              ) : "Enregistrer les paramètres"}
+            </Button>
           </CardContent>
         </Card>
       </div>

@@ -14,7 +14,7 @@ export default function StockPage() {
   const [search, setSearch] = useState("");
 
   const stock = (data?.stock ?? []).filter((s) =>
-    s.nom.toLowerCase().includes(search.toLowerCase())
+    `${s.produitNom} ${s.cartonLabel}`.toLowerCase().includes(search.toLowerCase())
   );
 
   return (

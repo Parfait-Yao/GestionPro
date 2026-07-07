@@ -48,23 +48,19 @@ async function main() {
   const produits = [
     {
       id: "seed-prod-cajou",       nom: "Noix de Cajou Brut",       categorie: "Matière Première",
-      description: "Noix de cajou brutes non décortiquées",
-      poidsUnitaireRef: 0.007, tarreCarton: 1.2, seuilTolerancePct: 3.0, seuilSensibleQte: 100,
+      description: "Noix de cajou brutes non décortiquées", quantite: 487,
     },
     {
       id: "seed-prod-cajou-trans", nom: "Noix de Cajou Transformée", categorie: "Produit Transformé",
-      description: "Noix de cajou décortiquées et séchées",
-      poidsUnitaireRef: 0.005, tarreCarton: 0.8, seuilTolerancePct: 2.0, seuilSensibleQte: 50,
+      description: "Noix de cajou décortiquées et séchées", quantite: 305,
     },
     {
       id: "seed-prod-mangue",      nom: "Mangue Séchée",             categorie: "Produit Transformé",
-      description: "Tranches de mangue déshydratées",
-      poidsUnitaireRef: 0.015, tarreCarton: 1.0, seuilTolerancePct: 3.0, seuilSensibleQte: 80,
+      description: "Tranches de mangue déshydratées", quantite: 198,
     },
     {
       id: "seed-prod-emballage",   nom: "Emballage Carton",          categorie: "Consommable",
-      description: "Cartons d'emballage standard",
-      poidsUnitaireRef: null,  tarreCarton: null, seuilTolerancePct: 5.0, seuilSensibleQte: 20,
+      description: "Cartons d'emballage standard", quantite: 50,
     },
   ];
   for (const p of produits) {
@@ -76,38 +72,49 @@ async function main() {
     console.log(`✓ ${p.nom} (produit)`);
   }
 
+  // ── Commandes Chine ───────────────────────────────────────────────────────
+  const commandeChine1 = await prisma.commandeChine.upsert({
+    where: { id: "seed-cmdchine-1" },
+    update: {},
+    create: { id: "seed-cmdchine-1", reference: "CHINE-2026-001", note: "Conteneur cajou + mangue" },
+  });
+  const cartonsChine = [
+    { id: "seed-carton-1", commandeChineId: commandeChine1.id, identifiant: "CTN-A1" },
+    { id: "seed-carton-2", commandeChineId: commandeChine1.id, identifiant: "CTN-A2" },
+    { id: "seed-carton-3", commandeChineId: commandeChine1.id, identifiant: "CTN-B1" },
+  ];
+  for (const c of cartonsChine) {
+    await prisma.cartonChine.upsert({ where: { id: c.id }, update: {}, create: c });
+  }
+  console.log("✓ 1 commande Chine + 3 cartons");
+
   // ── Réceptions ────────────────────────────────────────────────────────────
   const receptions = [
     {
       id: "seed-rec-1",
       produitId: "seed-prod-cajou", gerantId: gerant.id,
-      methode: "PESEE_ASSISTEE" as const,
-      quantiteAttendue: 500, quantiteEstimee: 487, ecartPct: -2.6,
-      poidsEchantillon: 3.4, nbUnitesEchantillon: 485, poidsCartonPlein: 14.2, tarreUtilisee: 1.2,
+      commandeChineId: commandeChine1.id, cartonChineId: "seed-carton-1",
+      quantiteAttendue: 500, quantiteRecue: 487, ecart: -13,
       valide: true, createdAt: daysAgo(15),
     },
     {
       id: "seed-rec-2",
       produitId: "seed-prod-cajou", gerantId: gerant.id,
-      methode: "COMPTAGE_GROUPE" as const,
-      quantiteAttendue: 300, quantiteEstimee: 305, ecartPct: 1.67,
-      nbTas: 6, unitesParTas: 50,
+      commandeChineId: commandeChine1.id, cartonChineId: "seed-carton-2",
+      quantiteAttendue: 300, quantiteRecue: 305, ecart: 5,
       valide: true, createdAt: daysAgo(7),
     },
     {
       id: "seed-rec-3",
       produitId: "seed-prod-mangue", gerantId: gerant.id,
-      methode: "PESEE_ASSISTEE" as const,
-      quantiteAttendue: 200, quantiteEstimee: 198, ecartPct: -1.0,
-      poidsEchantillon: 2.9, nbUnitesEchantillon: 193, poidsCartonPlein: 4.9, tarreUtilisee: 1.0,
+      commandeChineId: commandeChine1.id, cartonChineId: "seed-carton-3",
+      quantiteAttendue: 200, quantiteRecue: 198, ecart: -2,
       valide: true, createdAt: daysAgo(10),
     },
     {
       id: "seed-rec-4",
       produitId: "seed-prod-emballage", gerantId: gerant.id,
-      methode: "COMPTAGE_GROUPE" as const,
-      quantiteAttendue: 50, quantiteEstimee: 50, ecartPct: 0.0,
-      nbTas: 5, unitesParTas: 10,
+      quantiteAttendue: 50, quantiteRecue: 50, ecart: 0,
       valide: true, createdAt: daysAgo(5),
     },
   ];
@@ -134,31 +141,35 @@ async function main() {
   }
   console.log(`✓ ${mouvements.length} mouvements stock`);
 
-  // ── Sorties ───────────────────────────────────────────────────────────────
-  const sorties = [
+  // ── Mouvements de stock (entrée/sortie) ──────────────────────────────────
+  const mouvementsEntreeSortie = [
     {
-      id: "seed-sortie-1",
-      produitId: "seed-prod-cajou-trans", employeId: "seed-emp-ibrahim", gerantId: gerant.id,
-      motif: "VENTE" as const, quantiteAnnoncee: 30, quantiteConfirmee: 30, statut: "CONFIRMEE" as const,
-      ecartConstate: 0, annonceAt: daysAgo(6), confirmationAt: daysAgo(6, 9),
+      id: "seed-mouvement-1", type: "SORTIE" as const,
+      employeId: "seed-emp-ibrahim", gerantId: gerant.id,
+      motif: "VENTE" as const, statut: "CONFIRMEE" as const, createdAt: daysAgo(6, 9),
+      lignes: [{ id: "seed-mouvement-1-l1", produitId: "seed-prod-cajou-trans", quantite: 30 }],
     },
     {
-      id: "seed-sortie-2",
-      produitId: "seed-prod-mangue", employeId: "seed-emp-fatoumata", gerantId: gerant.id,
-      motif: "VENTE" as const, quantiteAnnoncee: 50, quantiteConfirmee: 48, statut: "CONFIRMEE" as const,
-      ecartConstate: 2, annonceAt: daysAgo(4), confirmationAt: daysAgo(4, 10),
+      id: "seed-mouvement-2", type: "SORTIE" as const,
+      employeId: "seed-emp-fatoumata", gerantId: gerant.id,
+      motif: "VENTE" as const, statut: "CONFIRMEE" as const, createdAt: daysAgo(4, 10),
+      lignes: [{ id: "seed-mouvement-2-l1", produitId: "seed-prod-mangue", quantite: 48 }],
     },
     {
-      id: "seed-sortie-3",
-      produitId: "seed-prod-cajou-trans", employeId: "seed-emp-aicha", gerantId: gerant.id,
-      motif: "VENTE" as const, quantiteAnnoncee: 20, quantiteConfirmee: null, statut: "EN_ATTENTE" as const,
-      ecartConstate: null, annonceAt: daysAgo(1), confirmationAt: null,
+      id: "seed-mouvement-3", type: "SORTIE" as const,
+      employeId: "seed-emp-aicha", gerantId: gerant.id,
+      motif: "VENTE" as const, statut: "CONFIRMEE" as const, createdAt: daysAgo(1),
+      lignes: [{ id: "seed-mouvement-3-l1", produitId: "seed-prod-cajou-trans", quantite: 20 }],
     },
   ];
-  for (const s of sorties) {
-    await prisma.sortie.upsert({ where: { id: s.id }, update: {}, create: s });
+  for (const m of mouvementsEntreeSortie) {
+    const { lignes, ...data } = m;
+    await prisma.mouvement.upsert({ where: { id: m.id }, update: {}, create: data });
+    for (const l of lignes) {
+      await prisma.mouvementLigne.upsert({ where: { id: l.id }, update: {}, create: { ...l, mouvementId: m.id } });
+    }
   }
-  console.log(`✓ ${sorties.length} sorties`);
+  console.log(`✓ ${mouvementsEntreeSortie.length} mouvements entrée/sortie`);
 
   // ── Pointages ─────────────────────────────────────────────────────────────
   const today = new Date();
@@ -236,6 +247,7 @@ async function main() {
     { cle: "whatsapp_numero_patronne", valeur: "+2250172703242" },
     { cle: "rapport_auto_actif",       valeur: "false"           },
     { cle: "rapport_heure_auto",       valeur: "18:00"           },
+    { cle: "seuil_escalade_sortie",    valeur: "50"              },
   ];
   for (const c of configs) {
     await prisma.configuration.upsert({ where: { cle: c.cle }, update: { valeur: c.valeur }, create: c });

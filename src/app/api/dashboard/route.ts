@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { formatPct, formatRelative } from "@/lib/utils";
-
-const MOTIF_LABEL: Record<string, string> = {
-  VENTE: "Vente",
-  TRANSFORMATION: "Transformation",
-  USAGE_INTERNE: "Usage interne",
-  REMPLACEMENT_DEFECTUEUX: "Remplacement défectueux",
-  AUTRE: "Autre",
-};
+import { libelleEcart, formatRelative } from "@/lib/utils";
+import { MOTIF_LABELS } from "@/lib/motifs";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -48,14 +41,14 @@ export async function GET() {
       commandesEnAttente,
       sortiesDuJour,
       sortiesHier,
-      sortiesEnAttente,
+      mouvementsEscalade,
       alertesOuvertes,
       receptionsCeMois,
       employesActifs,
       produitsCatalogue,
       mouvements30j,
       receptionsRecentes,
-      sortiesRecentes,
+      mouvementsRecents,
       pointagesRecents,
       alertesRecentes,
     ] = await Promise.all([
@@ -63,12 +56,12 @@ export async function GET() {
       prisma.commande.count({ where: { commandeAt: { gte: debutMois } } }),
       prisma.commande.count({ where: { commandeAt: { gte: debutMoisDernier, lt: debutMois } } }),
       prisma.commande.count({ where: { statut: "EN_ATTENTE" } }),
-      prisma.sortie.count({ where: { annonceAt: { gte: debutJour } } }),
-      prisma.sortie.count({ where: { annonceAt: { gte: debutHier, lt: debutJour } } }),
-      prisma.sortie.findMany({
-        where: { statut: "EN_ATTENTE" },
-        include: { produit: { select: { nom: true } }, employe: { select: { nom: true, prenom: true } } },
-        orderBy: { annonceAt: "asc" },
+      prisma.mouvement.count({ where: { type: "SORTIE", createdAt: { gte: debutJour } } }),
+      prisma.mouvement.count({ where: { type: "SORTIE", createdAt: { gte: debutHier, lt: debutJour } } }),
+      prisma.mouvement.findMany({
+        where: { statut: "ESCALADE_PATRONNE" },
+        include: { lignes: { include: { produit: { select: { nom: true } } } }, employe: { select: { nom: true, prenom: true } } },
+        orderBy: { createdAt: "desc" },
         take: 5,
       }),
       prisma.alerte.count({ where: { statut: "OUVERTE" } }),
@@ -84,9 +77,9 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         take: 5,
       }),
-      prisma.sortie.findMany({
-        include: { produit: { select: { nom: true } }, employe: { select: { nom: true, prenom: true } } },
-        orderBy: { annonceAt: "desc" },
+      prisma.mouvement.findMany({
+        include: { lignes: { include: { produit: { select: { nom: true } } } }, employe: { select: { nom: true, prenom: true } } },
+        orderBy: { createdAt: "desc" },
         take: 5,
       }),
       prisma.pointage.findMany({
@@ -132,15 +125,15 @@ export async function GET() {
         id: `reception-${r.id}`,
         type: "reception" as const,
         titre: `Réception — ${r.produit.nom}`,
-        detail: `${r.gerant.prenom} ${r.gerant.nom} · ${r.quantiteEstimee}/${r.quantiteAttendue} · écart ${formatPct(r.ecartPct)}`,
+        detail: `${r.gerant.prenom} ${r.gerant.nom} · ${r.quantiteRecue}/${r.quantiteAttendue} · ${libelleEcart(r.ecart)}`,
         date: r.createdAt,
       })),
-      ...sortiesRecentes.map((s) => ({
-        id: `sortie-${s.id}`,
+      ...mouvementsRecents.map((m) => ({
+        id: `mouvement-${m.id}`,
         type: "sortie" as const,
-        titre: `${s.statut === "EN_ATTENTE" ? "Sortie annoncée" : "Sortie confirmée"} — ${s.produit.nom}`,
-        detail: `${s.employe.prenom} ${s.employe.nom} · ${s.quantiteAnnoncee} unités · ${MOTIF_LABEL[s.motif] ?? s.motif}`,
-        date: s.annonceAt,
+        titre: `${m.type === "ENTREE" ? "Entrée" : "Sortie"} — ${m.lignes.map((l) => l.produit.nom).join(", ")}`,
+        detail: `${m.employe.prenom} ${m.employe.nom} · ${m.lignes.reduce((s, l) => s + l.quantite, 0)} unités · ${MOTIF_LABELS[m.motif] ?? m.motif}`,
+        date: m.createdAt,
       })),
       ...pointagesRecents.map((p) => ({
         id: `pointage-${p.id}`,
@@ -169,7 +162,7 @@ export async function GET() {
         commandesEnAttente,
         commandesVariation: variationPct(commandesCeMois, commandesMoisDernier),
         sortiesDuJour,
-        sortiesEnAttenteCount: sortiesEnAttente.length,
+        mouvementsEscaladeCount: mouvementsEscalade.length,
         sortiesVariation: variationPct(sortiesDuJour, sortiesHier),
         alertesOuvertes,
         receptionsCeMois,
@@ -178,11 +171,11 @@ export async function GET() {
       },
       mouvementsGraph,
       activites,
-      sortiesEnAttente: sortiesEnAttente.map((s) => ({
-        id: s.id,
-        produit: s.produit.nom,
-        employe: `${s.employe.prenom} ${s.employe.nom}`,
-        qte: s.quantiteAnnoncee,
+      mouvementsEscalade: mouvementsEscalade.map((m) => ({
+        id: m.id,
+        produit: m.lignes.map((l) => l.produit.nom).join(", "),
+        employe: `${m.employe.prenom} ${m.employe.nom}`,
+        qte: m.lignes.reduce((s, l) => s + l.quantite, 0),
       })),
     });
   } catch (err) {

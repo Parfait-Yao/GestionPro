@@ -28,16 +28,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await req.json();
 
-    const tolerance = body.seuilTolerancePct !== undefined ? parseNumber(body.seuilTolerancePct) : undefined;
-    const seuilQte = body.seuilSensibleQte !== undefined ? parseNumber(body.seuilSensibleQte) : undefined;
-    const poids = body.poidsUnitaireRef !== undefined ? parseNumber(body.poidsUnitaireRef) : undefined;
-    const tare = body.tarreCarton !== undefined ? parseNumber(body.tarreCarton) : undefined;
+    const qte = body.quantite !== undefined ? parseNumber(body.quantite) : undefined;
 
-    if ([tolerance, seuilQte, poids, tare].some((n) => n !== undefined && Number.isNaN(n))) {
-      return NextResponse.json({ error: "Un des champs numériques est invalide" }, { status: 400 });
+    if (qte !== undefined && Number.isNaN(qte)) {
+      return NextResponse.json({ error: "La quantité est invalide" }, { status: 400 });
     }
-    if (seuilQte !== undefined && (!Number.isInteger(seuilQte) || seuilQte > INT4_MAX || seuilQte < -INT4_MAX)) {
-      return NextResponse.json({ error: "Le seuil escalade doit être un nombre entier valide" }, { status: 400 });
+    if (qte !== undefined && (!Number.isInteger(qte) || qte > INT4_MAX || qte < -INT4_MAX)) {
+      return NextResponse.json({ error: "La quantité doit être un nombre entier valide" }, { status: 400 });
     }
 
     const produit = await prisma.produit.update({
@@ -47,10 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(body.categorie !== undefined && { categorie: body.categorie?.trim() || null }),
         ...(body.description !== undefined && { description: body.description?.trim() || null }),
         ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl || null }),
-        ...(poids !== undefined && { poidsUnitaireRef: poids || null }),
-        ...(tare !== undefined && { tarreCarton: tare || null }),
-        ...(tolerance !== undefined && { seuilTolerancePct: tolerance }),
-        ...(seuilQte !== undefined && { seuilSensibleQte: seuilQte }),
+        ...(qte !== undefined && { quantite: qte }),
         ...(body.actif !== undefined && { actif: body.actif }),
       },
     });

@@ -26,22 +26,19 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { nom, categorie, description, imageUrl, poidsUnitaireRef, tarreCarton, seuilTolerancePct, seuilSensibleQte } = body;
+    const { nom, categorie, description, imageUrl, quantite } = body;
 
     if (!nom) {
       return NextResponse.json({ error: "Le nom est requis" }, { status: 400 });
     }
 
-    const poids = parseNumber(poidsUnitaireRef);
-    const tare = parseNumber(tarreCarton);
-    const tolerance = parseNumber(seuilTolerancePct) ?? 3.0;
-    const seuilQte = parseNumber(seuilSensibleQte) ?? 50;
+    const qte = parseNumber(quantite) ?? 0;
 
-    if ([poids, tare, tolerance, seuilQte].some((n) => n !== null && Number.isNaN(n))) {
-      return NextResponse.json({ error: "Un des champs numériques est invalide" }, { status: 400 });
+    if (Number.isNaN(qte)) {
+      return NextResponse.json({ error: "La quantité est invalide" }, { status: 400 });
     }
-    if (!Number.isInteger(seuilQte) || seuilQte > INT4_MAX || seuilQte < -INT4_MAX) {
-      return NextResponse.json({ error: "Le seuil escalade doit être un nombre entier valide" }, { status: 400 });
+    if (!Number.isInteger(qte) || qte > INT4_MAX || qte < -INT4_MAX) {
+      return NextResponse.json({ error: "La quantité doit être un nombre entier valide" }, { status: 400 });
     }
 
     const produit = await prisma.produit.create({
@@ -50,10 +47,7 @@ export async function POST(req: NextRequest) {
         categorie: categorie?.trim() || null,
         description: description?.trim() || null,
         imageUrl: imageUrl || null,
-        poidsUnitaireRef: poids,
-        tarreCarton: tare,
-        seuilTolerancePct: tolerance,
-        seuilSensibleQte: seuilQte,
+        quantite: qte,
         actif: true,
       },
     });

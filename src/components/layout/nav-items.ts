@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   PackagePlus,
   Boxes,
-  PackageMinus,
   ClipboardCheck,
   AlertTriangle,
   Package,
@@ -37,14 +36,13 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Réceptions", href: "/receptions", icon: PackagePlus },
       { label: "Stock", href: "/stock", icon: Boxes },
-      { label: "Sorties", href: "/sorties", icon: PackageMinus, badgeKey: "sorties" },
+      { label: "Mouvements de stock", href: "/pointage", icon: ClipboardCheck, badgeKey: "sorties" },
     ],
   },
   {
     title: "Équipe",
     items: [
       { label: "Employés", href: "/employes", icon: Users },
-      { label: "Pointage", href: "/pointage", icon: ClipboardCheck },
     ],
   },
   {

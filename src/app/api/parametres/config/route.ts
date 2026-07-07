@@ -5,6 +5,7 @@ const CLES_AUTORISEES = [
   "whatsapp_numero_patronne",
   "rapport_heure_auto",
   "rapport_auto_actif",
+  "seuil_escalade_sortie",
 ];
 
 export async function GET() {
@@ -23,6 +24,7 @@ export async function GET() {
   }
   if (!result.rapport_heure_auto) result.rapport_heure_auto = "18:00";
   if (!result.rapport_auto_actif) result.rapport_auto_actif = "false";
+  if (!result.seuil_escalade_sortie) result.seuil_escalade_sortie = "50";
 
   return NextResponse.json(result);
 }

@@ -4,7 +4,7 @@ export const queryKeys = {
   produits: ["produits"] as const,
   produit: (id: string) => ["produits", id] as const,
   employes: ["employes"] as const,
-  sorties: ["sorties"] as const,
+  mouvements: ["mouvements"] as const,
   receptions: ["receptions"] as const,
   pointage: ["pointage"] as const,
   pointageOpen: ["pointage", "open"] as const,
@@ -12,4 +12,6 @@ export const queryKeys = {
   dashboard: ["dashboard"] as const,
   stock: ["stock"] as const,
   alertes: ["alertes"] as const,
+  commandesChine: ["commandes-chine"] as const,
+  commandeChine: (id: string) => ["commandes-chine", id] as const,
 };

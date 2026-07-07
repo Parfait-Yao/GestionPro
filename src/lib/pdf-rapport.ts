@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit";
 import { prisma } from "./prisma";
 import { format, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
+import { libelleEcart } from "./utils";
 
 const VERT_FONCE = "#1a472a";
 const VERT = "#2d6a4f";
@@ -152,16 +153,16 @@ function verifSaut(doc: PDFKit.PDFDocument, y: number, besoin: number): number {
 }
 
 export async function genererPdfRapport(dateDebut: Date, dateFin: Date): Promise<Buffer> {
-  const [receptions, sorties, pointages, alertes] = await Promise.all([
+  const [receptions, mouvementsSortie, pointages, alertes] = await Promise.all([
     prisma.reception.findMany({
       where: { createdAt: { gte: dateDebut, lte: dateFin } },
       include: { produit: true, gerant: true },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.sortie.findMany({
-      where: { annonceAt: { gte: dateDebut, lte: dateFin } },
-      include: { produit: true, employe: true, gerant: true },
-      orderBy: { annonceAt: "desc" },
+    prisma.mouvement.findMany({
+      where: { type: "SORTIE", createdAt: { gte: dateDebut, lte: dateFin } },
+      include: { lignes: { include: { produit: true } }, employe: true, gerant: true },
+      orderBy: { createdAt: "desc" },
     }),
     prisma.pointage.findMany({
       where: { entreeAt: { gte: dateDebut, lte: dateFin } },
@@ -174,6 +175,17 @@ export async function genererPdfRapport(dateDebut: Date, dateFin: Date): Promise
       orderBy: { createdAt: "desc" },
     }),
   ]);
+
+  const sorties = mouvementsSortie.flatMap((m) =>
+    m.lignes.map((l) => ({
+      produit: l.produit,
+      employe: m.employe,
+      motif: m.motif,
+      quantiteAnnoncee: l.quantite,
+      quantiteConfirmee: l.quantite as number | null,
+      statut: m.statut,
+    }))
+  );
 
   const doc = new PDFDocument({ margin: MARGE, size: "A4", autoFirstPage: true });
   const chunks: Buffer[] = [];
@@ -221,18 +233,16 @@ export async function genererPdfRapport(dateDebut: Date, dateFin: Date): Promise
     } else {
       const colsRec: ColDef[] = [
         { header: "Produit", width: 120 },
-        { header: "Méthode", width: 90 },
-        { header: "Qté attendue", width: 75 },
-        { header: "Qté estimée", width: 75 },
-        { header: "Écart %", width: 65 },
+        { header: "Qté attendue", width: 80 },
+        { header: "Qté reçue", width: 80 },
+        { header: "Écart", width: 90 },
         { header: "Gérant", width: 90 },
       ];
       const rowsRec = receptions.map((r) => [
         r.produit.nom,
-        r.methode === "PESEE_ASSISTEE" ? "Pesée assistée" : "Comptage groupé",
         String(r.quantiteAttendue),
-        String(r.quantiteEstimee),
-        `${r.ecartPct.toFixed(1)} %`,
+        String(r.quantiteRecue),
+        libelleEcart(r.ecart),
         `${r.gerant.prenom} ${r.gerant.nom}`,
       ]);
       y = verifSaut(doc, y, 18 + receptions.length * 16 + 10);

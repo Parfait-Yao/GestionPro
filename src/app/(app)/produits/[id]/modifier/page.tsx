@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Package, ImageIcon, Upload, X, Loader, CheckCircle, Scale, Tag } from "lucide-react";
+import { Package, ImageIcon, Upload, Camera, X, Loader, CheckCircle } from "lucide-react";
 import { useProduit, useUpdateProduit } from "@/hooks/useProduits";
 
 const CATEGORIES = ["Matière Première", "Produit Transformé", "Consommable", "Emballage", "Autre"];
@@ -15,12 +15,12 @@ export default function ModifierProduitPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const { data: produit, isLoading: chargement } = useProduit(params.id);
   const updateProduit = useUpdateProduit(params.id);
 
   const [form, setForm] = useState({
-    nom: "", categorie: "", description: "",
-    poidsUnitaireRef: "", tarreCarton: "", seuilTolerancePct: "3", seuilSensibleQte: "50",
+    nom: "", categorie: "", description: "", quantite: "0",
   });
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -34,10 +34,7 @@ export default function ModifierProduitPage() {
       nom: produit.nom ?? "",
       categorie: produit.categorie ?? "",
       description: produit.description ?? "",
-      poidsUnitaireRef: produit.poidsUnitaireRef?.toString() ?? "",
-      tarreCarton: produit.tarreCarton?.toString() ?? "",
-      seuilTolerancePct: produit.seuilTolerancePct?.toString() ?? "3",
-      seuilSensibleQte: produit.seuilSensibleQte?.toString() ?? "50",
+      quantite: produit.quantite?.toString() ?? "0",
     });
     setImageUrl(produit.imageUrl ?? null);
     setImagePreview(produit.imageUrl ?? null);
@@ -95,7 +92,7 @@ export default function ModifierProduitPage() {
   if (chargement) {
     return (
       <>
-        <Header title="Modifier le produit" subtitle="Références, photos et seuils de tolérance" />
+        <Header title="Modifier le produit" subtitle="Références, photos et quantités en stock" />
         <div className="flex items-center justify-center py-20 text-text-muted">Chargement…</div>
       </>
     );
@@ -103,7 +100,7 @@ export default function ModifierProduitPage() {
 
   return (
     <>
-      <Header title="Modifier le produit" subtitle="Mettre à jour la référence et ses seuils" />
+      <Header title="Modifier le produit" subtitle="Mettre à jour la référence, sa photo et sa quantité" />
       <div className="flex-1 p-4 sm:p-6">
         <div className="mx-auto max-w-2xl">
           <form onSubmit={submit} className="space-y-6">
@@ -122,6 +119,14 @@ export default function ModifierProduitPage() {
                   ref={fileRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={handleImage}
+                />
+                <input
+                  ref={cameraRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
                   className="sr-only"
                   onChange={handleImage}
                 />
@@ -149,19 +154,34 @@ export default function ModifierProduitPage() {
                     )}
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border bg-surface py-10 hover:border-primary hover:bg-primary/5 transition-colors"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      <Upload className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-text-main">Cliquer pour ajouter une photo</p>
-                      <p className="text-xs text-text-muted mt-1">JPEG, PNG ou WebP · max 5 Mo</p>
-                    </div>
-                  </button>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => cameraRef.current?.click()}
+                      className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border bg-surface py-10 hover:border-primary hover:bg-primary/5 transition-colors"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                        <Camera className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-text-main">Prendre une photo</p>
+                        <p className="text-xs text-text-muted mt-1">Appareil photo du téléphone/tablette</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border bg-surface py-10 hover:border-primary hover:bg-primary/5 transition-colors"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                        <Upload className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-text-main">Choisir un fichier</p>
+                        <p className="text-xs text-text-muted mt-1">JPEG, PNG ou WebP · max 5 Mo</p>
+                      </div>
+                    </button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -189,6 +209,7 @@ export default function ModifierProduitPage() {
                     </select>
                   </div>
                 </div>
+                <Input label="Quantité en stock" type="number" min={0} placeholder="ex: 100" value={form.quantite} onChange={(e) => set("quantite", e.target.value)} />
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-text-main">Description</label>
                   <textarea
@@ -198,32 +219,6 @@ export default function ModifierProduitPage() {
                     rows={3}
                     className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                   />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Seuils */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Scale className="h-4 w-4 text-warning" />
-                  Paramètres techniques
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Input label="Poids unitaire de référence (g)" type="number" placeholder="ex: 7" value={form.poidsUnitaireRef} onChange={(e) => set("poidsUnitaireRef", e.target.value)} />
-                  <Input label="Tare carton (kg)" type="number" placeholder="ex: 1.2" value={form.tarreCarton} onChange={(e) => set("tarreCarton", e.target.value)} />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <Input label="Tolérance pesée (%)" type="number" min={0} max={100} value={form.seuilTolerancePct} onChange={(e) => set("seuilTolerancePct", e.target.value)} />
-                    <p className="mt-1 text-xs text-text-muted">Écart acceptable entre quantité attendue et estimée</p>
-                  </div>
-                  <div>
-                    <Input label="Seuil escalade (unités)" type="number" min={0} value={form.seuilSensibleQte} onChange={(e) => set("seuilSensibleQte", e.target.value)} />
-                    <p className="mt-1 text-xs text-text-muted">Écart déclenchant une escalade vers la patronne</p>
-                  </div>
                 </div>
               </CardContent>
             </Card>

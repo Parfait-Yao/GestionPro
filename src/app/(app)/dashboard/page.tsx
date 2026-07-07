@@ -15,7 +15,7 @@ export default function DashboardPage() {
 
   const kpis = data?.kpis;
   const activites = data?.activites ?? [];
-  const sortiesEnAttente = data?.sortiesEnAttente ?? [];
+  const mouvementsEscalade = data?.mouvementsEscalade ?? [];
   const mouvementsGraph = data?.mouvementsGraph ?? [];
 
   return (
@@ -43,7 +43,7 @@ export default function DashboardPage() {
           <KpiCard
             label="Sorties du jour"
             value={isLoading ? "…" : String(kpis?.sortiesDuJour ?? 0)}
-            unit={`dont ${kpis?.sortiesEnAttenteCount ?? 0} en attente`}
+            unit={`dont ${kpis?.mouvementsEscaladeCount ?? 0} escaladées`}
             variation={kpis?.sortiesVariation}
             icon={PackageMinus}
             accent="accent"
@@ -128,31 +128,31 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Sorties en attente */}
+        {/* Écarts signalés à la patronne */}
         <Card className="card-hover">
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-base">Sorties en attente de confirmation</CardTitle>
-            <span className="text-xs text-text-muted">{sortiesEnAttente.length} en attente</span>
+            <CardTitle className="text-base">Écarts signalés à la patronne</CardTitle>
+            <span className="text-xs text-text-muted">{mouvementsEscalade.length} escaladé{mouvementsEscalade.length > 1 ? "s" : ""}</span>
           </CardHeader>
           <CardContent className="divide-y divide-border">
             {isLoading ? (
               <p className="py-3.5 text-sm text-text-muted">Chargement…</p>
-            ) : sortiesEnAttente.length === 0 ? (
-              <p className="py-3.5 text-sm text-text-muted">Aucune sortie en attente</p>
+            ) : mouvementsEscalade.length === 0 ? (
+              <p className="py-3.5 text-sm text-text-muted">Aucun écart signalé</p>
             ) : (
-              sortiesEnAttente.map((s) => (
-                <div key={s.id} className="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+              mouvementsEscalade.map((m) => (
+                <div key={m.id} className="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                       <Package className="h-5 w-5 text-accent" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-text-main">{s.produit}</p>
-                      <p className="text-xs text-text-muted">Annoncée par {s.employe} · {s.qte} unités</p>
+                      <p className="text-sm font-semibold text-text-main">{m.produit}</p>
+                      <p className="text-xs text-text-muted">Sortie de {m.employe} · {m.qte} unités</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 pl-13 sm:pl-0">
-                    <Badge status="EN_ATTENTE">{statutLabels.EN_ATTENTE}</Badge>
+                    <Badge status="ESCALADE_PATRONNE">{statutLabels.ESCALADE_PATRONNE}</Badge>
                   </div>
                 </div>
               ))
