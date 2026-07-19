@@ -62,6 +62,7 @@ export function ImageUpload({ value, onChange, folder = "general", className }: 
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/jpeg, image/png, image/webp, image/gif"
+        capture="environment"
         className="hidden"
       />
 
