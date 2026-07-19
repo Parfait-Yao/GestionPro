@@ -51,6 +51,7 @@ export async function GET() {
       mouvementsRecents,
       pointagesRecents,
       alertesRecentes,
+      receptionsAvecEcart,
     ] = await Promise.all([
       prisma.mouvementStock.groupBy({ by: ["type"], _sum: { quantite: true } }),
       prisma.commande.count({ where: { commandeAt: { gte: debutMois } } }),
@@ -89,6 +90,13 @@ export async function GET() {
       }),
       prisma.alerte.findMany({
         include: { produit: { select: { nom: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      // Réceptions avec écart (reçu ≠ attendu)
+      prisma.reception.findMany({
+        where: { ecart: { not: 0 } },
+        include: { produit: { select: { nom: true } }, gerant: { select: { nom: true, prenom: true } } },
         orderBy: { createdAt: "desc" },
         take: 5,
       }),
@@ -176,6 +184,15 @@ export async function GET() {
         produit: m.lignes.map((l) => l.produit.nom).join(", "),
         employe: `${m.employe.prenom} ${m.employe.nom}`,
         qte: m.lignes.reduce((s, l) => s + l.quantite, 0),
+      })),
+      ecartReceptions: receptionsAvecEcart.map((r) => ({
+        id: r.id,
+        produit: r.produit.nom,
+        gerant: `${r.gerant.prenom} ${r.gerant.nom}`,
+        quantiteAttendue: r.quantiteAttendue,
+        quantiteRecue: r.quantiteRecue,
+        ecart: r.ecart,
+        createdAt: r.createdAt,
       })),
     });
   } catch (err) {

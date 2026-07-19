@@ -40,6 +40,8 @@ enum ProductStatus {
   EN_STOCK_TRANSFORME
   VENDU
   UTILISE_INTERNE
+  RETIRE_DEFECTUEUX
+  SORTIE_AUTRE
 }
 
 enum MouvementType {
@@ -56,6 +58,7 @@ enum SortieMotif {
   TRANSFORMATION
   USAGE_INTERNE
   REMPLACEMENT_DEFECTUEUX
+  CORRECTION_INVENTAIRE
   AUTRE
 }
 
@@ -90,10 +93,12 @@ model Utilisateur {
 
   receptions       Reception[]
   mouvementsSaisis Mouvement[]
-  pointages        Pointage[]       @relation("GerantPointage")
+  pointages        Pointage[]            @relation("GerantPointage")
   mouvements       MouvementStock[]
   comptages        Comptage[]
   commandes        Commande[]
+  stockMouvementsSaisis StockMouvement[] @relation("StockMouvementSaisiPar")
+  stockMouvementsValides StockMouvement[] @relation("StockMouvementValidePar")
 
   @@map("utilisateurs")
 }
@@ -110,6 +115,7 @@ model Employe {
   pointages  Pointage[]
   mouvements Mouvement[]
   commandes  Commande[] @relation("CommandeLivreur")
+  stockMouvements StockMouvement[]
 
   @@map("employes")
 }
@@ -131,6 +137,8 @@ model Produit {
   comptages       Comptage[]
   alertes         Alerte[]
   commandes       Commande[]
+  cartonsChine    CartonChine[]
+  stockMouvementLignes StockMouvementLigne[]
 
   @@map("produits")
 }
@@ -197,6 +205,46 @@ model MouvementLigne {
   quantite    Int
 
   @@map("mouvement_lignes")
+}
+
+model StockMouvement {
+  id            String                @id @default(cuid())
+  sens          MouvementSens
+  motif         SortieMotif
+  noteMotif     String?
+  employe       Employe               @relation(fields: [employeId], references: [id])
+  employeId     String
+  gerant        Utilisateur           @relation("StockMouvementSaisiPar", fields: [gerantId], references: [id])
+  gerantId      String
+  statut        SortieStatut          @default(CONFIRMEE)
+  validatedAt   DateTime?
+  validatedBy   Utilisateur?          @relation("StockMouvementValidePar", fields: [validatedById], references: [id])
+  validatedById String?
+  refusMotif    String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  lignes StockMouvementLigne[]
+
+  @@index([statut])
+  @@map("stock_mouvements")
+}
+
+model StockMouvementLigne {
+  id            String         @id @default(cuid())
+  mouvement     StockMouvement @relation(fields: [mouvementId], references: [id], onDelete: Cascade)
+  mouvementId   String
+  produit       Produit        @relation(fields: [produitId], references: [id])
+  produitId     String
+  cartonChine   CartonChine?   @relation(fields: [cartonChineId], references: [id])
+  cartonChineId String?
+  quantite      Int
+  etatDepart    ProductStatus?
+  etatArrivee   ProductStatus
+  createdAt     DateTime       @default(now())
+
+  @@index([produitId])
+  @@map("stock_mouvement_lignes")
 }
 
 model Pointage {
@@ -319,10 +367,13 @@ model CartonChine {
   commandeChineId String
   identifiant     String
   photoUrl        String?
+  produit         Produit?      @relation(fields: [produitId], references: [id], onDelete: SetNull)
+  produitId       String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   receptions Reception[]
+  stockMouvementLignes StockMouvementLigne[]
 
   @@unique([commandeChineId, identifiant])
   @@map("cartons_chine")

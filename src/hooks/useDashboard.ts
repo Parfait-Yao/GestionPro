@@ -17,6 +17,16 @@ export type MouvementEscaladeDashboard = {
   qte: number;
 };
 
+export type EcartReceptionDashboard = {
+  id: string;
+  produit: string;
+  gerant: string;
+  quantiteAttendue: number;
+  quantiteRecue: number;
+  ecart: number;
+  createdAt: string;
+};
+
 export type DashboardData = {
   kpis: {
     stockTotal: number;
@@ -34,6 +44,7 @@ export type DashboardData = {
   mouvementsGraph: { jour: string; mouvements: number }[];
   activites: ActiviteDashboard[];
   mouvementsEscalade: MouvementEscaladeDashboard[];
+  ecartReceptions: EcartReceptionDashboard[];
 };
 
 export function useDashboard() {

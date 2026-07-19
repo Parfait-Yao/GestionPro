@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Plus, Package, Boxes, Search, ImageIcon, Pencil, Trash2 } from "lucide-react";
-import { useProduits, useDeleteProduit } from "@/hooks/useProduits";
+import { Tabs } from "@/components/ui/Tabs";
+import { Package, Boxes, Search, ImageIcon, Box, ChevronLeft, ChevronRight } from "lucide-react";
+import { useProduits } from "@/hooks/useProduits";
 
 const CATEGORY_COLORS: Record<string, string> = {
   "Matière Première":   "bg-amber-50  text-amber-700  border-amber-200",
@@ -14,27 +13,42 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Consommable":        "bg-blue-50   text-blue-700   border-blue-200",
 };
 
+const PAGE_SIZE = 24;
+
 export default function ProduitsPage() {
   const { data: produits = [], isLoading: loading } = useProduits();
-  const deleteProduit = useDeleteProduit();
   const [search, setSearch] = useState("");
-  const [errMsg, setErrMsg] = useState("");
+  const [page, setPage] = useState(0);
 
   const filtered = produits.filter((p) =>
     `${p.nom} ${p.categorie ?? ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  function supprimerProduit(id: string, nom: string) {
-    if (!window.confirm(`Supprimer définitivement « ${nom} » ?`)) return;
-    setErrMsg("");
-    deleteProduit.mutate(id, {
-      onError: (e) => setErrMsg(e.message),
-    });
-  }
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(0);
+  }, [page, totalPages]);
+
+  const pageTabs = useMemo(
+    () =>
+      Array.from({ length: totalPages }, (_, i) => {
+        const start = i * PAGE_SIZE + 1;
+        const end = Math.min((i + 1) * PAGE_SIZE, filtered.length);
+        return { value: String(i), label: totalPages > 1 ? `${start}–${end}` : "Tout" };
+      }),
+    [totalPages, filtered.length]
+  );
+
+  const paginated = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <>
-      <Header title="Catalogue produits" subtitle="Références, photos et quantités en stock" />
+      <Header title="Catalogue produits" subtitle="Références, photos et quantités en stock (lecture seule)" />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -48,16 +62,8 @@ export default function ProduitsPage() {
               className="w-full rounded-xl border border-border bg-card pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-          <Link href="/produits/nouveau">
-            <Button variant="accent"><Plus className="h-4 w-4" />Nouveau produit</Button>
-          </Link>
+          <p className="text-sm text-text-muted">{filtered.length} produit{filtered.length !== 1 ? "s" : ""}</p>
         </div>
-
-        {errMsg && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {errMsg}
-          </div>
-        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20 text-text-muted">Chargement…</div>
@@ -65,14 +71,12 @@ export default function ProduitsPage() {
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-text-muted">
             <Package className="h-12 w-12 opacity-30" />
             <p className="text-sm">Aucun produit trouvé</p>
-            <Link href="/produits/nouveau">
-              <Button variant="accent" size="sm"><Plus className="h-4 w-4" />Ajouter un produit</Button>
-            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((p) => {
+            {paginated.map((p) => {
               const catColor = CATEGORY_COLORS[p.categorie ?? ""] ?? "bg-gray-50 text-gray-700 border-gray-200";
+              const photo = p.imageUrl ?? p.cartonsChine?.find((c) => c.photoUrl)?.photoUrl ?? null;
               return (
                 <Card
                   key={p.id}
@@ -80,8 +84,8 @@ export default function ProduitsPage() {
                 >
                   {/* Image */}
                   <div className="h-36 bg-gradient-to-br from-surface to-border flex items-center justify-center overflow-hidden relative">
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.nom} className="h-full w-full object-cover" />
+                    {photo ? (
+                      <img src={photo} alt={p.nom} className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex flex-col items-center gap-2 text-text-muted/40">
                         <ImageIcon className="h-10 w-10" />
@@ -113,26 +117,48 @@ export default function ProduitsPage() {
                       <span className="text-text-muted text-xs">Quantité en stock</span>
                       <span className="ml-auto font-semibold text-text-main">{p.quantite}</span>
                     </div>
-                  </CardContent>
 
-                  <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
-                    <Link href={`/produits/${p.id}/modifier`}>
-                      <Button variant="outline" size="sm">
-                        <Pencil className="h-3.5 w-3.5" />Modifier
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={deleteProduit.isPending && deleteProduit.variables === p.id}
-                      onClick={() => supprimerProduit(p.id, p.nom)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />Supprimer
-                    </Button>
-                  </div>
+                    {p.cartonsChine && p.cartonsChine.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.cartonsChine.map((c) => (
+                          <span
+                            key={c.id}
+                            className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent"
+                          >
+                            <Box className="h-3 w-3" />
+                            {c.identifiant} · {c.commandeChine.reference}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
                 </Card>
               );
             })}
+          </div>
+        )}
+
+        {!loading && totalPages > 1 && (
+          <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-between">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-text-muted transition-colors hover:bg-surface hover:text-text-main disabled:opacity-30 disabled:hover:bg-card"
+              title="Page précédente"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <Tabs tabs={pageTabs} active={String(page)} onChange={(v) => setPage(Number(v))} className="overflow-x-auto" />
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-text-muted transition-colors hover:bg-surface hover:text-text-main disabled:opacity-30 disabled:hover:bg-card"
+              title="Page suivante"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         )}
       </div>

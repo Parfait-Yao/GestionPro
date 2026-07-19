@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge, statutLabels } from "@/components/ui/Badge";
 import { useDashboard } from "@/hooks/useDashboard";
 import { formatQte } from "@/lib/utils";
-import { Boxes, PackagePlus, PackageMinus, AlertTriangle, ShoppingBag, Users, Package } from "lucide-react";
+import { Boxes, PackagePlus, PackageMinus, AlertTriangle, ShoppingBag, Users, Package, TrendingDown, TrendingUp } from "lucide-react";
 
 export default function DashboardPage() {
   const { data, isLoading } = useDashboard();
@@ -17,6 +17,10 @@ export default function DashboardPage() {
   const activites = data?.activites ?? [];
   const mouvementsEscalade = data?.mouvementsEscalade ?? [];
   const mouvementsGraph = data?.mouvementsGraph ?? [];
+  const ecartReceptions = data?.ecartReceptions ?? [];
+
+  const totalEcarts = mouvementsEscalade.length + ecartReceptions.length;
+
 
   return (
     <>
@@ -132,33 +136,82 @@ export default function DashboardPage() {
         <Card className="card-hover">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="text-base">Écarts signalés à la patronne</CardTitle>
-            <span className="text-xs text-text-muted">{mouvementsEscalade.length} escaladé{mouvementsEscalade.length > 1 ? "s" : ""}</span>
+            <span className="text-xs text-text-muted">{totalEcarts} signal{totalEcarts > 1 ? "és" : "é"}</span>
           </CardHeader>
-          <CardContent className="divide-y divide-border">
+          <CardContent className="space-y-6">
             {isLoading ? (
               <p className="py-3.5 text-sm text-text-muted">Chargement…</p>
-            ) : mouvementsEscalade.length === 0 ? (
+            ) : totalEcarts === 0 ? (
               <p className="py-3.5 text-sm text-text-muted">Aucun écart signalé</p>
             ) : (
-              mouvementsEscalade.map((m) => (
-                <div key={m.id} className="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
-                      <Package className="h-5 w-5 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-text-main">{m.produit}</p>
-                      <p className="text-xs text-text-muted">Sortie de {m.employe} · {m.qte} unités</p>
+              <>
+                {/* Sorties escaladées */}
+                {mouvementsEscalade.length > 0 && (
+                  <div>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      Sorties anormales ({mouvementsEscalade.length})
+                    </p>
+                    <div className="divide-y divide-border">
+                      {mouvementsEscalade.map((m) => (
+                        <div key={m.id} className="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                              <Package className="h-5 w-5 text-accent" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-text-main">{m.produit}</p>
+                              <p className="text-xs text-text-muted">Sortie de {m.employe} · {m.qte} unités</p>
+                            </div>
+                          </div>
+                          <Badge status="ESCALADE_PATRONNE">{statutLabels.ESCALADE_PATRONNE}</Badge>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pl-13 sm:pl-0">
-                    <Badge status="ESCALADE_PATRONNE">{statutLabels.ESCALADE_PATRONNE}</Badge>
+                )}
+
+                {/* Réceptions avec écart */}
+                {ecartReceptions.length > 0 && (
+                  <div>
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      Écarts de réception ({ecartReceptions.length})
+                    </p>
+                    <div className="divide-y divide-border">
+                      {ecartReceptions.map((r) => {
+                        const manque = r.ecart < 0;
+                        return (
+                          <div key={r.id} className="flex flex-col gap-3 py-3.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${manque ? "bg-danger/10" : "bg-success/10"}`}>
+                                {manque
+                                  ? <TrendingDown className="h-5 w-5 text-danger" />
+                                  : <TrendingUp className="h-5 w-5 text-success" />
+                                }
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-text-main">{r.produit}</p>
+                                <p className="text-xs text-text-muted">
+                                  Attendu {r.quantiteAttendue} · Reçu {r.quantiteRecue} ·{" "}
+                                  <span className={manque ? "text-danger font-medium" : "text-success font-medium"}>
+                                    {manque ? `−${Math.abs(r.ecart)}` : `+${r.ecart}`} unités
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${manque ? "bg-danger/10 text-danger" : "bg-success/10 text-success"}`}>
+                              {manque ? "Manque" : "Surplus"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))
+                )}
+              </>
             )}
           </CardContent>
         </Card>
+
       </div>
     </>
   );

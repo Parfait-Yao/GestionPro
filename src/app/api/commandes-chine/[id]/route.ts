@@ -6,7 +6,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
     const { id } = await params;
     const commande = await prisma.commandeChine.findUnique({
       where: { id },
-      include: { cartons: { orderBy: { identifiant: "asc" } } },
+      include: { cartons: { include: { produit: true }, orderBy: { identifiant: "asc" } } },
     });
     if (!commande) {
       return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const commande = await prisma.commandeChine.update({
       where: { id },
       data,
-      include: { cartons: { orderBy: { identifiant: "asc" } } },
+      include: { cartons: { include: { produit: true }, orderBy: { identifiant: "asc" } } },
     });
     return NextResponse.json(commande);
   } catch {

@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { useEmployes } from "@/hooks/useEmployes";
 import { useProduits } from "@/hooks/useProduits";
 import { useCreateMouvement, type MouvementSens } from "@/hooks/useMouvements";
-import { MOTIFS } from "@/lib/motifs";
+import { MOTIFS_SORTIE, MOTIFS_ENTREE } from "@/lib/motifs";
 import { cn } from "@/lib/utils";
 
 type ProduitLigne = { produitId: string; quantite: string };
@@ -185,7 +185,7 @@ export function SaisieMouvementsTable() {
                       value={ligne.motif}
                       onChange={(e) => updateLigne(emp.id, { motif: e.target.value })}
                     >
-                      {MOTIFS.map((m) => (
+                      {(ligne.type === "SORTIE" ? MOTIFS_SORTIE : MOTIFS_ENTREE).map((m) => (
                         <option key={m.value} value={m.value}>{m.label}</option>
                       ))}
                     </Select>
@@ -204,7 +204,14 @@ export function SaisieMouvementsTable() {
                 <td className="px-4 py-3">
                   <button
                     type="button"
-                    onClick={() => updateLigne(emp.id, { type: ligne.type === "SORTIE" ? "ENTREE" : "SORTIE" })}
+                    onClick={() => {
+                      const nextType = ligne.type === "SORTIE" ? "ENTREE" : "SORTIE";
+                      updateLigne(emp.id, {
+                        type: nextType,
+                        // Forcer le motif cohérent avec le nouveau type
+                        motif: nextType === "ENTREE" ? "CORRECTION_INVENTAIRE" : "VENTE",
+                      });
+                    }}
                     className={cn(
                       "flex h-9 w-24 items-center justify-center rounded-full text-xs font-semibold text-white transition-colors",
                       ligne.type === "SORTIE" ? "bg-danger hover:bg-danger/90" : "bg-success hover:bg-success/90"

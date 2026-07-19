@@ -7,6 +7,15 @@ export type CartonChine = {
   commandeChineId: string;
   identifiant: string;
   photoUrl: string | null;
+  produitId: string | null;
+  produit: {
+    id: string;
+    nom: string;
+    categorie: string | null;
+    description: string | null;
+    imageUrl: string | null;
+    quantite: number;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -72,6 +81,14 @@ export function useDeleteCommandeChine() {
   });
 }
 
+export type NouveauProduitCarton = {
+  nom: string;
+  categorie?: string;
+  description?: string;
+  quantite?: string | number;
+  imageUrl?: string | null;
+};
+
 export function useCreateCarton(commandeChineId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -91,7 +108,7 @@ export function useCreateCarton(commandeChineId: string) {
 export function useUpdateCarton(commandeChineId: string, cartonId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { identifiant?: string; photoUrl?: string | null }) =>
+    mutationFn: (data: { identifiant?: string; photoUrl?: string | null; produit?: NouveauProduitCarton }) =>
       apiFetch<CartonChine>(`/api/commandes-chine/${commandeChineId}/cartons/${cartonId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -100,6 +117,7 @@ export function useUpdateCarton(commandeChineId: string, cartonId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.commandeChine(commandeChineId) });
       qc.invalidateQueries({ queryKey: queryKeys.commandesChine });
+      qc.invalidateQueries({ queryKey: queryKeys.produits });
     },
   });
 }

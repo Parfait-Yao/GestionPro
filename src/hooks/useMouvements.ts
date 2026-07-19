@@ -47,7 +47,10 @@ export function useCreateMouvement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.mouvements }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.mouvements });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
   });
 }
 

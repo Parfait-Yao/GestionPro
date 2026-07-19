@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const commandes = await prisma.commandeChine.findMany({
-      include: { cartons: { orderBy: { identifiant: "asc" } } },
+      include: { cartons: { include: { produit: true }, orderBy: { identifiant: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(commandes);

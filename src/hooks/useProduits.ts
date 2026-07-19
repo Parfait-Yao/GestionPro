@@ -10,6 +10,12 @@ export type Produit = {
   imageUrl: string | null;
   quantite: number;
   actif: boolean;
+  cartonsChine?: {
+    id: string;
+    identifiant: string;
+    photoUrl: string | null;
+    commandeChine: { id: string; reference: string };
+  }[];
 };
 
 export type ProduitPayload = {
@@ -32,19 +38,6 @@ export function useProduit(id: string) {
     queryKey: queryKeys.produit(id),
     queryFn: () => apiFetch<Produit>(`/api/produits/${id}`),
     enabled: !!id,
-  });
-}
-
-export function useCreateProduit() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data: ProduitPayload) =>
-      apiFetch<Produit>("/api/produits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.produits }),
   });
 }
 

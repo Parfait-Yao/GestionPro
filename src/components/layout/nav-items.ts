@@ -29,6 +29,8 @@ export const navSections: NavSection[] = [
   {
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Mouvements de stock", href: "/pointage", icon: ClipboardCheck, badgeKey: "sorties" },
+      { label: "Produits", href: "/produits", icon: Package },
     ],
   },
   {
@@ -36,7 +38,6 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Réceptions", href: "/receptions", icon: PackagePlus },
       { label: "Stock", href: "/stock", icon: Boxes },
-      { label: "Mouvements de stock", href: "/pointage", icon: ClipboardCheck, badgeKey: "sorties" },
     ],
   },
   {
@@ -50,7 +51,6 @@ export const navSections: NavSection[] = [
     items: [
       { label: "Commandes", href: "/commandes", icon: ShoppingBag, badgeKey: "commandes" },
       { label: "Livreurs", href: "/livreurs", icon: Truck },
-      { label: "Produits", href: "/produits", icon: Package },
     ],
   },
   {

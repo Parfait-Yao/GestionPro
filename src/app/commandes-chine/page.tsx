@@ -111,7 +111,7 @@ export default function CommandesChinePage() {
                   onChange={(e) => setNote(e.target.value)}
                 />
               </div>
-              <Button type="submit" variant="accent" disabled={createCommande.isPending || !reference.trim()}>
+              <Button type="submit" variant="accent" className="w-full sm:w-auto" disabled={createCommande.isPending || !reference.trim()}>
                 {createCommande.isPending ? <Loader className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Créer la commande
               </Button>

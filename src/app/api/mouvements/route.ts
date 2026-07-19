@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getGerantId } from "@/lib/gerant";
 import { creerNotification } from "@/lib/notifications";
-import { MOTIF_VALUES, MOUVEMENT_PAR_MOTIF_SORTIE, MOUVEMENT_ENTREE } from "@/lib/motifs";
+import { MOTIF_VALUES, MOTIF_VALUES_SORTIE, MOTIF_VALUES_ENTREE, MOUVEMENT_PAR_MOTIF_SORTIE, MOUVEMENT_ENTREE } from "@/lib/motifs";
 
 const TYPES = ["ENTREE", "SORTIE"];
 
@@ -31,6 +31,14 @@ export async function POST(req: NextRequest) {
 
     if (!TYPES.includes(type) || !employeId || !MOTIF_VALUES.includes(motif)) {
       return NextResponse.json({ error: "Type, employé et motif requis" }, { status: 400 });
+    }
+
+    // Vérifier la cohérence motif/type
+    if (type === "SORTIE" && !MOTIF_VALUES_SORTIE.includes(motif)) {
+      return NextResponse.json({ error: "Motif invalide pour une sortie" }, { status: 400 });
+    }
+    if (type === "ENTREE" && !MOTIF_VALUES_ENTREE.includes(motif)) {
+      return NextResponse.json({ error: "Une entrée doit avoir le motif Correction / retour" }, { status: 400 });
     }
 
     const lignesValides = lignes

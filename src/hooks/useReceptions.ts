@@ -32,6 +32,10 @@ export function useCreateReception() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.receptions }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.receptions });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+
   });
 }

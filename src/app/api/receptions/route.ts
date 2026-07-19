@@ -7,10 +7,10 @@ export async function GET() {
   try {
     const receptions = await prisma.reception.findMany({
       include: {
-        produit: { select: { id: true, nom: true } },
+        produit: { select: { id: true, nom: true, imageUrl: true } },
         gerant: { select: { id: true, nom: true, prenom: true } },
         commandeChine: { select: { id: true, reference: true } },
-        cartonChine: { select: { id: true, identifiant: true } },
+        cartonChine: { select: { id: true, identifiant: true, photoUrl: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -60,10 +60,10 @@ export async function POST(req: NextRequest) {
           valide: true,
         },
         include: {
-          produit: { select: { id: true, nom: true } },
+          produit: { select: { id: true, nom: true, imageUrl: true } },
           gerant: { select: { id: true, nom: true, prenom: true } },
           commandeChine: { select: { id: true, reference: true } },
-          cartonChine: { select: { id: true, identifiant: true } },
+          cartonChine: { select: { id: true, identifiant: true, photoUrl: true } },
         },
       }),
       prisma.mouvementStock.create({
@@ -77,12 +77,22 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    await creerNotification({
-      type: "reception",
-      titre: "Nouvelle réception",
-      message: `${reception.quantiteRecue} unités de ${reception.produit.nom} reçues`,
-      lien: `/receptions`,
-    });
+    if (ecart !== 0) {
+      const sens = ecart < 0 ? `manque ${Math.abs(ecart)}` : `surplus de ${ecart}`;
+      await creerNotification({
+        type: "alerte",
+        titre: "Écart de réception signalé",
+        message: `${reception.produit.nom} — ${sens} unité(s) (attendu ${quantiteAttendue}, reçu ${quantiteRecue})`,
+        lien: `/receptions`,
+      });
+    } else {
+      await creerNotification({
+        type: "reception",
+        titre: "Nouvelle réception",
+        message: `${reception.quantiteRecue} unités de ${reception.produit.nom} reçues`,
+        lien: `/receptions`,
+      });
+    }
 
     return NextResponse.json(reception, { status: 201 });
   } catch (err) {
