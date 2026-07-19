@@ -6,12 +6,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ArrowLeft, Home, Package, Plus, Pencil, Trash2, Upload, Loader,
-  X, Check, ImageIcon, CheckCircle,
+  X, Check, ImageIcon
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import {
   useCommandeChine,
   useCreateCarton,
@@ -27,6 +28,7 @@ const CATEGORIES = ["Matière Première", "Produit Transformé", "Consommable", 
 async function uploadPhoto(file: File): Promise<string> {
   const fd = new FormData();
   fd.append("file", file);
+  fd.append("folder", "cartons");
   const res = await fetch("/api/upload", { method: "POST", body: fd });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Erreur lors de l'upload");
@@ -38,11 +40,8 @@ export default function CommandeChinePage() {
   const { data: commande, isLoading } = useCommandeChine(id);
   const createCarton = useCreateCarton(id);
 
-  const fileRef = useRef<HTMLInputElement>(null);
   const [identifiant, setIdentifiant] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
   const suggestion = useMemo(() => {
@@ -50,29 +49,6 @@ export default function CommandeChinePage() {
     const n = commande.cartons.length + 1;
     return `${commande.reference}-#${String(n).padStart(2, "0")}`;
   }, [commande]);
-
-  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoPreview(URL.createObjectURL(file));
-    setUploading(true);
-    setErrMsg("");
-    try {
-      const url = await uploadPhoto(file);
-      setPhotoUrl(url);
-    } catch (err) {
-      setErrMsg(err instanceof Error ? err.message : "Erreur lors de l'upload");
-      setPhotoPreview(null);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function removePhoto() {
-    setPhotoUrl(null);
-    setPhotoPreview(null);
-    if (fileRef.current) fileRef.current.value = "";
-  }
 
   function submitCarton(e: React.FormEvent) {
     e.preventDefault();
@@ -84,7 +60,7 @@ export default function CommandeChinePage() {
       {
         onSuccess: () => {
           setIdentifiant("");
-          removePhoto();
+          setPhotoUrl(null);
         },
         onError: (err) => setErrMsg(err.message),
       }
@@ -105,8 +81,8 @@ export default function CommandeChinePage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card/95 backdrop-blur-sm px-4 py-4 sm:px-6">
+    <div className="min-h-screen theme-bg">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border theme-card backdrop-blur-sm px-4 py-4 sm:px-6">
         <Link href="/commandes-chine" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-text-muted hover:bg-border hover:text-text-main transition-colors">
           <ArrowLeft className="h-4 w-4" />
         </Link>
@@ -138,53 +114,14 @@ export default function CommandeChinePage() {
 
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text-main">Photo du carton</label>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    capture="environment"
-                    className="sr-only"
-                    onChange={handlePhoto}
-                  />
-                  {photoPreview ? (
-                    <div className="relative h-32 w-full overflow-hidden rounded-xl bg-surface">
-                      <img src={photoPreview} alt="Aperçu" className="h-full w-full object-cover" />
-                      {uploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                          <Loader className="h-6 w-6 animate-spin text-white" />
-                        </div>
-                      )}
-                      {!uploading && (
-                        <button type="button" onClick={removePhoto} className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors">
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                      {photoUrl && !uploading && (
-                        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-success px-2.5 py-1 text-xs text-white">
-                          <CheckCircle className="h-3 w-3" />Uploadée
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => fileRef.current?.click()}
-                      className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface transition-colors hover:border-accent hover:bg-accent/5"
-                    >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
-                        <Upload className="h-4 w-4 text-accent" />
-                      </div>
-                      <p className="text-xs font-medium text-text-main">Prendre ou importer une photo</p>
-                      <p className="text-[11px] text-text-muted">JPEG, PNG ou WebP · max 5 Mo</p>
-                    </button>
-                  )}
+                  <ImageUpload value={photoUrl ?? undefined} onChange={(url) => setPhotoUrl(url || null)} folder="cartons" />
                 </div>
               </div>
 
               {errMsg && <p className="text-sm text-danger">{errMsg}</p>}
 
               <div className="flex justify-end">
-                <Button type="submit" variant="accent" className="w-full sm:w-auto" disabled={createCarton.isPending || uploading}>
+                <Button type="submit" variant="accent" className="w-full sm:w-auto" disabled={createCarton.isPending}>
                   {createCarton.isPending ? <Loader className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   Ajouter le carton
                 </Button>
@@ -219,7 +156,6 @@ function CartonCard({ commandeChineId, carton }: { commandeChineId: string; cart
   const updateProduit = useUpdateProduit(carton.produit?.id ?? "");
   const deleteProduit = useDeleteProduit();
   const fileRef = useRef<HTMLInputElement>(null);
-  const produitFileRef = useRef<HTMLInputElement>(null);
 
   const [editing, setEditing] = useState(false);
   const [identifiant, setIdentifiant] = useState(carton.identifiant);
@@ -230,8 +166,6 @@ function CartonCard({ commandeChineId, carton }: { commandeChineId: string; cart
   const [isEditingProduit, setIsEditingProduit] = useState(false);
   const [produit, setProduit] = useState(EMPTY_PRODUIT);
   const [produitPhotoUrl, setProduitPhotoUrl] = useState<string | null>(null);
-  const [produitPhotoPreview, setProduitPhotoPreview] = useState<string | null>(null);
-  const [uploadingProduitPhoto, setUploadingProduitPhoto] = useState(false);
   const [produitErr, setProduitErr] = useState("");
 
   function setProduitField(k: keyof typeof produit, v: string) {
@@ -242,7 +176,6 @@ function CartonCard({ commandeChineId, carton }: { commandeChineId: string; cart
     setIsEditingProduit(false);
     setProduit(EMPTY_PRODUIT);
     setProduitPhotoUrl(null);
-    setProduitPhotoPreview(null);
     setProduitErr("");
     setShowProduitModal(true);
   }
@@ -257,32 +190,8 @@ function CartonCard({ commandeChineId, carton }: { commandeChineId: string; cart
       quantite: String(carton.produit.quantite),
     });
     setProduitPhotoUrl(carton.produit.imageUrl ?? null);
-    setProduitPhotoPreview(carton.produit.imageUrl ?? null);
     setProduitErr("");
     setShowProduitModal(true);
-  }
-
-  async function handleProduitPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setProduitPhotoPreview(URL.createObjectURL(file));
-    setUploadingProduitPhoto(true);
-    setProduitErr("");
-    try {
-      const url = await uploadPhoto(file);
-      setProduitPhotoUrl(url);
-    } catch (err) {
-      setProduitErr(err instanceof Error ? err.message : "Erreur lors de l'upload");
-      setProduitPhotoPreview(null);
-    } finally {
-      setUploadingProduitPhoto(false);
-    }
-  }
-
-  function removeProduitPhoto() {
-    setProduitPhotoUrl(null);
-    setProduitPhotoPreview(null);
-    if (produitFileRef.current) produitFileRef.current.value = "";
   }
 
   function submitProduit(e: React.FormEvent) {
@@ -441,41 +350,7 @@ function CartonCard({ commandeChineId, carton }: { commandeChineId: string; cart
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-medium text-text-main">Photo du produit</label>
-              <input
-                ref={produitFileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                capture="environment"
-                className="sr-only"
-                onChange={handleProduitPhoto}
-              />
-              {produitPhotoPreview ? (
-                <div className="relative h-32 w-full overflow-hidden rounded-xl bg-surface">
-                  <img src={produitPhotoPreview} alt="Aperçu" className="h-full w-full object-cover" />
-                  {uploadingProduitPhoto && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      <Loader className="h-6 w-6 animate-spin text-white" />
-                    </div>
-                  )}
-                  {!uploadingProduitPhoto && (
-                    <button type="button" onClick={removeProduitPhoto} className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors">
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => produitFileRef.current?.click()}
-                  className="flex h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface transition-colors hover:border-accent hover:bg-accent/5"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10">
-                    <Upload className="h-4 w-4 text-accent" />
-                  </div>
-                  <p className="text-xs font-medium text-text-main">Ajouter une photo du produit</p>
-                  <p className="text-[11px] text-text-muted">JPEG, PNG ou WebP · max 5 Mo</p>
-                </button>
-              )}
+              <ImageUpload value={produitPhotoUrl ?? undefined} onChange={(url) => setProduitPhotoUrl(url || null)} folder="produits" />
             </div>
             <div className="sm:col-span-2">
               <Input
@@ -527,7 +402,7 @@ function CartonCard({ commandeChineId, carton }: { commandeChineId: string; cart
             <Button
               type="submit"
               variant="accent"
-              disabled={uploadingProduitPhoto || (isEditingProduit ? updateProduit.isPending : updateCarton.isPending)}
+              disabled={isEditingProduit ? updateProduit.isPending : updateCarton.isPending}
             >
               {(isEditingProduit ? updateProduit.isPending : updateCarton.isPending) ? (
                 <Loader className="h-4 w-4 animate-spin" />

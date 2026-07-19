@@ -3,12 +3,14 @@
 import { Search, RefreshCw, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 import { NotificationsBell } from "./NotificationsBell";
+import { ThemeSwitcher } from "./ThemeSwitcher";
+
 
 export function Header({ title, subtitle }: { title: string; subtitle?: string }) {
   const { collapsed, toggleCollapsed, openMobile } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card/95 backdrop-blur-sm px-4 py-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border theme-card backdrop-blur-sm px-4 py-4 sm:px-6" style={{borderColor: 'var(--color-border)'}}>
 
       {/* Toggle mobile (hamburger) */}
       <button
@@ -52,6 +54,8 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
           <RefreshCw className="h-3.5 w-3.5" />
           <span className="hidden md:inline">Actualiser</span>
         </button>
+
+        <ThemeSwitcher />
 
         <NotificationsBell />
 

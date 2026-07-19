@@ -26,7 +26,7 @@ async function migrer(tx: Tx) {
   // jamais créer de Reception. Ces produits n'ont donc aucune source dans le nouveau
   // ledger dérivé — on crée la Reception manquante pour qu'ils gardent leur stock réel
   // au lieu de retomber à 0.
-  const gerantId = await getGerantId();
+  const gerantId = await getGerantId(tx);
   const cartonsSansReception = await tx.cartonChine.findMany({
     where: { produitId: { not: null } },
     include: { produit: true },

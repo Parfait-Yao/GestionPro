@@ -1,33 +1,30 @@
 @import "tailwindcss";
 
+/* =========================================================
+   THÈME DÉFAUT — Ciel (Bleu clair, fond blanc cassé)
+   ========================================================= */
 :root {
-  /* Primary – bleu doux */
-  --color-primary: #3b82f6;
-  --color-primary-light: #60a5fa;
-  --color-primary-dark: #2563eb;
+  --color-primary:       #3b82f6;
+  --color-primary-light: #93c5fd;
+  --color-primary-dark:  #1d4ed8;
+  --color-accent:        #f97316;
+  --color-accent-light:  #fdba74;
 
-  /* Accent – orange vif (marque) */
-  --color-accent: #f9772f;
-  --color-accent-light: #fb923c;
-
-  /* Sémantique */
-  --color-success: #10b981;
+  --color-success: #22c55e;
   --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #8b5cf6;
+  --color-danger:  #ef4444;
+  --color-info:    #8b5cf6;
 
-  /* Surfaces */
-  --color-surface: #f4f5fa;
-  --color-card: #ffffff;
-  --color-border: #edeef3;
-  --color-text-main: #16192b;
-  --color-text-muted: #8a8fa3;
-  --color-background: #f4f5fa;
+  --color-background:    #f0f4ff;
+  --color-surface:       #e8edf8;
+  --color-card:          #ffffff;
+  --color-border:        #dbe2f5;
+  --color-text-main:     #0f172a;
+  --color-text-muted:    #64748b;
 
-  /* Sidebar (claire) */
-  --color-sidebar-bg: #ffffff;
-  --color-sidebar-bg-hover: #fdf1ea;
-  --color-sidebar-text: #6b7280;
+  --color-sidebar-bg:       #ffffff;
+  --color-sidebar-bg-hover: #e8edf8;
+  --color-sidebar-text:     #475569;
 
   --radius-sm: 0.625rem;
   --radius-md: 0.875rem;
@@ -35,27 +32,228 @@
   --radius-xl: 1.75rem;
 }
 
+/* =========================================================
+   THÈME NUIT — Dark classique
+   ========================================================= */
+[data-theme="dark"] {
+  --color-primary:       #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-dark:  #4338ca;
+  --color-accent:        #f43f5e;
+  --color-accent-light:  #fb7185;
+
+  --color-background:    #0f1117;
+  --color-surface:       #1a1d27;
+  --color-card:          #21242f;
+  --color-border:        #2e3347;
+  --color-text-main:     #f1f5f9;
+  --color-text-muted:    #64748b;
+
+  --color-sidebar-bg:       #1a1d27;
+  --color-sidebar-bg-hover: #2a2f42;
+  --color-sidebar-text:     #94a3b8;
+}
+
+/* =========================================================
+   THÈME MINUIT — Dark bleu marine
+   ========================================================= */
+[data-theme="midnight"] {
+  --color-primary:       #38bdf8;
+  --color-primary-light: #7dd3fc;
+  --color-primary-dark:  #0284c7;
+  --color-accent:        #f59e0b;
+  --color-accent-light:  #fbbf24;
+
+  --color-background:    #060d1f;
+  --color-surface:       #0d1a35;
+  --color-card:          #112040;
+  --color-border:        #1e3a5f;
+  --color-text-main:     #e2e8f0;
+  --color-text-muted:    #64748b;
+
+  --color-sidebar-bg:       #0d1a35;
+  --color-sidebar-bg-hover: #1a2f52;
+  --color-sidebar-text:     #94a3b8;
+}
+
+/* =========================================================
+   THÈME FORÊT — Vert naturel
+   ========================================================= */
+[data-theme="forest"] {
+  --color-primary:       #16a34a;
+  --color-primary-light: #4ade80;
+  --color-primary-dark:  #15803d;
+  --color-accent:        #f59e0b;
+  --color-accent-light:  #fbbf24;
+
+  --color-background:    #f0fdf4;
+  --color-surface:       #dcfce7;
+  --color-card:          #ffffff;
+  --color-border:        #bbf7d0;
+  --color-text-main:     #052e16;
+  --color-text-muted:    #4b7c5e;
+
+  --color-sidebar-bg:       #ffffff;
+  --color-sidebar-bg-hover: #dcfce7;
+  --color-sidebar-text:     #4b7c5e;
+}
+
+/* =========================================================
+   THÈME JUNGLE — Dark vert profond
+   ========================================================= */
+[data-theme="jungle"] {
+  --color-primary:       #4ade80;
+  --color-primary-light: #86efac;
+  --color-primary-dark:  #22c55e;
+  --color-accent:        #f59e0b;
+  --color-accent-light:  #fbbf24;
+
+  --color-background:    #041a0e;
+  --color-surface:       #072714;
+  --color-card:          #0a3318;
+  --color-border:        #134d24;
+  --color-text-main:     #dcfce7;
+  --color-text-muted:    #6aaf83;
+
+  --color-sidebar-bg:       #072714;
+  --color-sidebar-bg-hover: #0f3e1e;
+  --color-sidebar-text:     #6aaf83;
+}
+
+/* =========================================================
+   THÈME VIOLET — Améthyste clair
+   ========================================================= */
+[data-theme="violet"] {
+  --color-primary:       #7c3aed;
+  --color-primary-light: #a78bfa;
+  --color-primary-dark:  #5b21b6;
+  --color-accent:        #ec4899;
+  --color-accent-light:  #f9a8d4;
+
+  --color-background:    #f5f3ff;
+  --color-surface:       #ede9fe;
+  --color-card:          #ffffff;
+  --color-border:        #ddd6fe;
+  --color-text-main:     #1e1b4b;
+  --color-text-muted:    #6d5fa6;
+
+  --color-sidebar-bg:       #ffffff;
+  --color-sidebar-bg-hover: #ede9fe;
+  --color-sidebar-text:     #6d5fa6;
+}
+
+/* =========================================================
+   THÈME GALAXY — Dark violet cosmique
+   ========================================================= */
+[data-theme="galaxy"] {
+  --color-primary:       #c084fc;
+  --color-primary-light: #e879f9;
+  --color-primary-dark:  #a855f7;
+  --color-accent:        #38bdf8;
+  --color-accent-light:  #7dd3fc;
+
+  --color-background:    #09050f;
+  --color-surface:       #130a1f;
+  --color-card:          #1a0f2e;
+  --color-border:        #2d1b4e;
+  --color-text-main:     #f0e6ff;
+  --color-text-muted:    #9d7fc5;
+
+  --color-sidebar-bg:       #130a1f;
+  --color-sidebar-bg-hover: #231542;
+  --color-sidebar-text:     #9d7fc5;
+}
+
+/* =========================================================
+   THÈME ROSE — Corail girly
+   ========================================================= */
+[data-theme="rose"] {
+  --color-primary:       #e11d48;
+  --color-primary-light: #fb7185;
+  --color-primary-dark:  #be123c;
+  --color-accent:        #0d9488;
+  --color-accent-light:  #2dd4bf;
+
+  --color-background:    #fff1f2;
+  --color-surface:       #ffe4e6;
+  --color-card:          #ffffff;
+  --color-border:        #fecdd3;
+  --color-text-main:     #3b0018;
+  --color-text-muted:    #9f4a5e;
+
+  --color-sidebar-bg:       #ffffff;
+  --color-sidebar-bg-hover: #ffe4e6;
+  --color-sidebar-text:     #9f4a5e;
+}
+
+/* =========================================================
+   THÈME SUNSET — Orange chaud
+   ========================================================= */
+[data-theme="sunset"] {
+  --color-primary:       #ea580c;
+  --color-primary-light: #fb923c;
+  --color-primary-dark:  #c2410c;
+  --color-accent:        #7c3aed;
+  --color-accent-light:  #a78bfa;
+
+  --color-background:    #fff7ed;
+  --color-surface:       #ffedd5;
+  --color-card:          #ffffff;
+  --color-border:        #fed7aa;
+  --color-text-main:     #431407;
+  --color-text-muted:    #92521e;
+
+  --color-sidebar-bg:       #ffffff;
+  --color-sidebar-bg-hover: #ffedd5;
+  --color-sidebar-text:     #92521e;
+}
+
+/* =========================================================
+   THÈME CHARBON — Dark gris neutre
+   ========================================================= */
+[data-theme="charcoal"] {
+  --color-primary:       #94a3b8;
+  --color-primary-light: #cbd5e1;
+  --color-primary-dark:  #64748b;
+  --color-accent:        #f59e0b;
+  --color-accent-light:  #fbbf24;
+
+  --color-background:    #111318;
+  --color-surface:       #1c1f26;
+  --color-card:          #252932;
+  --color-border:        #333844;
+  --color-text-main:     #f8fafc;
+  --color-text-muted:    #64748b;
+
+  --color-sidebar-bg:       #1c1f26;
+  --color-sidebar-bg-hover: #282d38;
+  --color-sidebar-text:     #94a3b8;
+}
+
+/* =========================================================
+   Tailwind bridge (ne pas modifier)
+   ========================================================= */
 @theme inline {
-  --color-primary: var(--color-primary);
+  --color-primary:       var(--color-primary);
   --color-primary-light: var(--color-primary-light);
-  --color-primary-dark: var(--color-primary-dark);
-  --color-accent: var(--color-accent);
-  --color-accent-light: var(--color-accent-light);
-  --color-success: var(--color-success);
-  --color-warning: var(--color-warning);
-  --color-danger: var(--color-danger);
-  --color-info: var(--color-info);
+  --color-primary-dark:  var(--color-primary-dark);
+  --color-accent:        var(--color-accent);
+  --color-accent-light:  var(--color-accent-light);
+  --color-success:       var(--color-success);
+  --color-warning:       var(--color-warning);
+  --color-danger:        var(--color-danger);
+  --color-info:          var(--color-info);
 
-  --color-surface: var(--color-surface);
-  --color-card: var(--color-card);
-  --color-border: var(--color-border);
-  --color-text-main: var(--color-text-main);
-  --color-text-muted: var(--color-text-muted);
-  --color-background: var(--color-background);
+  --color-surface:       var(--color-surface);
+  --color-card:          var(--color-card);
+  --color-border:        var(--color-border);
+  --color-text-main:     var(--color-text-main);
+  --color-text-muted:    var(--color-text-muted);
+  --color-background:    var(--color-background);
 
-  --color-sidebar-bg: var(--color-sidebar-bg);
+  --color-sidebar-bg:       var(--color-sidebar-bg);
   --color-sidebar-bg-hover: var(--color-sidebar-bg-hover);
-  --color-sidebar-text: var(--color-sidebar-text);
+  --color-sidebar-text:     var(--color-sidebar-text);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -70,6 +268,11 @@ body {
   color: var(--color-text-main);
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.35s ease, color 0.25s ease;
+}
+
+html {
+  transition: background-color 0.35s ease;
 }
 
 * {
@@ -77,34 +280,59 @@ body {
   scrollbar-color: var(--color-border) transparent;
 }
 
-/* Cards élégantes */
-.card-shadow {
-  box-shadow: 0 2px 16px rgba(22, 25, 43, 0.05);
+/* ─── Classes dynamiques (CSS pur, répondent aux data-theme) ─── */
+.theme-body {
+  background-color: var(--color-background) !important;
+  color: var(--color-text-main) !important;
+  transition: background-color 0.35s ease, color 0.25s ease;
 }
-.card-hover {
-  transition: box-shadow 0.2s, transform 0.2s;
+
+.theme-bg {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-main) !important;
+  transition: background-color 0.35s ease;
 }
+
+.theme-card {
+  background-color: var(--color-card) !important;
+  color: var(--color-text-main) !important;
+  transition: background-color 0.35s ease;
+}
+
+.theme-sidebar {
+  background-color: var(--color-sidebar-bg) !important;
+  transition: background-color 0.35s ease;
+}
+
+/* ─── Cards ─── */
+.card-shadow { box-shadow: 0 2px 16px rgba(0,0,0, 0.06); }
+.card-hover  { transition: box-shadow 0.2s, transform 0.2s; }
 .card-hover:hover {
-  box-shadow: 0 10px 30px rgba(22, 25, 43, 0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0, 0.10);
   transform: translateY(-1px);
 }
 
-/* Sidebar claire */
-.sidebar-gradient {
-  background: var(--color-sidebar-bg);
-}
+/* ─── Sidebar ─── */
+.sidebar-gradient { background: var(--color-sidebar-bg); }
 
-/* Icônes pastel des KPI (fond clair + icône colorée) */
-.kpi-primary  { background: color-mix(in srgb, var(--color-primary) 12%, white); color: var(--color-primary); }
-.kpi-success  { background: color-mix(in srgb, var(--color-success) 12%, white); color: var(--color-success); }
-.kpi-accent   { background: color-mix(in srgb, var(--color-accent) 12%, white); color: var(--color-accent); }
-.kpi-danger   { background: color-mix(in srgb, var(--color-danger) 12%, white); color: var(--color-danger); }
-.kpi-info     { background: color-mix(in srgb, var(--color-info) 12%, white); color: var(--color-info); }
-.kpi-warning  { background: color-mix(in srgb, var(--color-warning) 12%, white); color: var(--color-warning); }
+/* ─── KPI icônes ─── */
+.kpi-primary { background: color-mix(in srgb, var(--color-primary) 14%, var(--color-card)); color: var(--color-primary); }
+.kpi-success { background: color-mix(in srgb, var(--color-success) 14%, var(--color-card)); color: var(--color-success); }
+.kpi-accent  { background: color-mix(in srgb, var(--color-accent)  14%, var(--color-card)); color: var(--color-accent); }
+.kpi-danger  { background: color-mix(in srgb, var(--color-danger)  14%, var(--color-card)); color: var(--color-danger); }
+.kpi-info    { background: color-mix(in srgb, var(--color-info)    14%, var(--color-card)); color: var(--color-info); }
+.kpi-warning { background: color-mix(in srgb, var(--color-warning) 14%, var(--color-card)); color: var(--color-warning); }
 
 @media (max-width: 767px) {
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
+  .touch-target { min-height: 44px; min-width: 44px; }
 }
+
+.kpi-danger  { background: color-mix(in srgb, var(--color-danger)  14%, var(--color-card)); color: var(--color-danger); }
+.kpi-info    { background: color-mix(in srgb, var(--color-info)    14%, var(--color-card)); color: var(--color-info); }
+.kpi-warning { background: color-mix(in srgb, var(--color-warning) 14%, var(--color-card)); color: var(--color-warning); }
+
+@media (max-width: 767px) {
+  .touch-target { min-height: 44px; min-width: 44px; }
+}
+
+

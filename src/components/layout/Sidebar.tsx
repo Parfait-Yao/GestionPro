@@ -57,7 +57,7 @@ function SidebarContent({
 
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="flex h-full flex-col bg-sidebar-bg border-r border-border">
+    <div className="flex h-full flex-col theme-sidebar border-r border-border">
       {/* Logo */}
       <div
         className={cn(
