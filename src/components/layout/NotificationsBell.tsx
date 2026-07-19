@@ -117,7 +117,7 @@ export function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-card card-shadow sm:w-96">
+        <div className="absolute -right-10 sm:right-0 top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border border-border bg-card card-shadow sm:w-96">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="text-sm font-semibold text-text-main">Notifications</p>
             {nonLues > 0 && (

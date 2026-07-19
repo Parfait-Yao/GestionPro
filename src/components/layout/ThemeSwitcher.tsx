@@ -53,7 +53,7 @@ export function ThemeSwitcher() {
       {open && (
         <div
           ref={panelRef}
-          className="absolute right-0 top-13 z-50 w-72 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+          className="absolute -right-20 sm:right-0 top-12 z-50 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
           style={{ boxShadow: `0 20px 60px rgba(0,0,0,0.18), 0 0 0 1px ${current.primary}20` }}
         >
           {/* En-tête du panel */}
