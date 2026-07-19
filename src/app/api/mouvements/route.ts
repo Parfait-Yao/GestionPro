@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         produitId: l.produitId,
         gerantId,
         type: mapping.type,
-        etatArrivee: mapping.etatArrivee,
+        etatArrivee: mapping.etatArrivee as any,
         quantite: l.quantite,
       };
     });
